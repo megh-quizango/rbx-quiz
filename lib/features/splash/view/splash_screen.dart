@@ -1,32 +1,37 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_urls.dart';
+import '../../../core/services/firebase_content_service.dart';
 import 'package:flutter_custom_tabs/flutter_custom_tabs.dart';
 
-class SplashScreen extends StatefulWidget {
+class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
   @override
-  State<SplashScreen> createState() => _SplashScreenState();
+  ConsumerState<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen>
+class _SplashScreenState extends ConsumerState<SplashScreen>
     with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   late final AnimationController _controller;
   bool _welcomeLaunched = false;
+  late final Future<String> _welcomeUrlFuture;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _welcomeUrlFuture = _prefetchWelcomeUrl();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 8),
+      duration: const Duration(seconds: 3),
     )..forward();
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    _controller.addStatusListener((status) {
+      if (status != AnimationStatus.completed) return;
       if (!mounted) return;
       _launchWelcomeTab();
     });
@@ -47,12 +52,25 @@ class _SplashScreenState extends State<SplashScreen>
     context.go('/');
   }
 
+  Future<String> _prefetchWelcomeUrl() async {
+    try {
+      final remote = await ref
+          .read(remoteUrlsProvider.future)
+          .timeout(const Duration(seconds: 5));
+      return remote.splash;
+    } catch (_) {
+      final remote = ref.read(remoteUrlsProvider).valueOrNull;
+      return remote?.splash ?? AppUrls.welcome;
+    }
+  }
+
   Future<void> _launchWelcomeTab() async {
     if (_welcomeLaunched) return;
     _welcomeLaunched = true;
+    final url = await _welcomeUrlFuture;
     try {
       await launchUrl(
-        Uri.parse(AppUrls.welcome),
+        Uri.parse(url),
         customTabsOptions: CustomTabsOptions(
           showTitle: true,
           urlBarHidingEnabled: true,

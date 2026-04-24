@@ -5,6 +5,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/constants/app_urls.dart';
+import '../../../core/services/firebase_content_service.dart';
+import '../../../core/services/tracked_web_launcher_service.dart';
 import '../../../core/state/app_state.dart';
 
 class SpinToWinScreen extends ConsumerStatefulWidget {
@@ -67,13 +70,7 @@ class _SpinToWinScreenState extends ConsumerState<SpinToWinScreen>
   Future<void> _startSpin() async {
     if (_isSpinning) return;
 
-    final now = DateTime.now();
-    final gate = ref.read(spinRewardGateProvider.notifier);
-    final canReward = gate.canRewardNow(now);
-
-    final targetIndex = canReward
-        ? _randomNonZeroIndex()
-        : _segments.indexOf(0);
+    final targetIndex = _random.nextInt(_segments.length);
     final end = _computeEndRotation(targetIndex);
 
     setState(() {
@@ -110,14 +107,7 @@ class _SpinToWinScreenState extends ConsumerState<SpinToWinScreen>
     final reward = _pendingReward;
     _pendingReward = 0;
 
-    if (reward > 0) {
-      final now = DateTime.now();
-      final gate = ref.read(spinRewardGateProvider.notifier);
-      if (gate.canRewardNow(now)) {
-        await gate.markRewarded(now);
-        await ref.read(balanceProvider.notifier).add(reward);
-      }
-    }
+    if (reward > 0) await ref.read(balanceProvider.notifier).add(reward);
 
     if (!mounted) return;
     await _showResultDialog(reward);
@@ -125,6 +115,8 @@ class _SpinToWinScreenState extends ConsumerState<SpinToWinScreen>
 
   Future<void> _showResultDialog(int reward) async {
     final rootContext = context;
+    final remoteUrls = ref.read(remoteUrlsProvider).valueOrNull;
+    final closeUrl = remoteUrls?.splash ?? AppUrls.welcome;
     await showDialog<void>(
       context: rootContext,
       barrierDismissible: false,
@@ -172,8 +164,15 @@ class _SpinToWinScreenState extends ConsumerState<SpinToWinScreen>
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    onPressed: () {
+                    onPressed: () async {
                       Navigator.of(context).pop();
+                      try {
+                        await TrackedWebLauncherService.instance.openAndWait(
+                          closeUrl,
+                          label: 'Spin to win',
+                        );
+                      } catch (_) {}
+                      if (!rootContext.mounted) return;
                       rootContext.go('/');
                     },
                     child: const Text(
@@ -191,14 +190,6 @@ class _SpinToWinScreenState extends ConsumerState<SpinToWinScreen>
         );
       },
     );
-  }
-
-  int _randomNonZeroIndex() {
-    final nonZero = <int>[];
-    for (var i = 0; i < _segments.length; i++) {
-      if (_segments[i] != 0) nonZero.add(i);
-    }
-    return nonZero[_random.nextInt(nonZero.length)];
   }
 
   double _computeEndRotation(int targetIndex) {
@@ -317,7 +308,7 @@ class _Wheel extends StatelessWidget {
         final size = min(constraints.maxWidth, constraints.maxHeight) * 0.92;
         final radius = size / 2;
         final segmentAngle = 2 * pi / segments.length;
-        final labelRadius = radius * 0.66;
+        final labelRadius = radius * 0.60;
 
         return SizedBox(
           width: size,
@@ -345,7 +336,7 @@ class _Wheel extends StatelessWidget {
                 ),
               ),
               Positioned(
-                top: -radius * 0.06,
+                top: -radius * 0.12,
                 child: Image.asset(
                   'assets/pointer.png',
                   width: radius * 0.26,

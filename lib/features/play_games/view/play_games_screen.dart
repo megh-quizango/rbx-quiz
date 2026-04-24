@@ -1,40 +1,39 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_urls.dart';
+import '../../../core/services/firebase_content_service.dart';
 import '../../../core/services/tracked_web_launcher_service.dart';
+import '../../../core/state/app_state.dart';
 
-class PlayGamesScreen extends StatefulWidget {
+class PlayGamesScreen extends ConsumerStatefulWidget {
   const PlayGamesScreen({super.key});
 
   @override
-  State<PlayGamesScreen> createState() => _PlayGamesScreenState();
+  ConsumerState<PlayGamesScreen> createState() => _PlayGamesScreenState();
 }
 
-class _PlayGamesScreenState extends State<PlayGamesScreen> {
+class _PlayGamesScreenState extends ConsumerState<PlayGamesScreen> {
   int _selectedIndex = 0;
   bool _showAllGames = false;
 
-  static const List<String> _gameAssets = [
-    'assets/ball_blaster.jpg',
-    'assets/block_vs_ball.png',
-    'assets/2048.png',
-    'assets/bottle_shoot.jpg',
-    'assets/bubble_shooter.jpg',
-    'assets/carnival_ducks.jpg',
-    'assets/color_bump.jpg',
-    'assets/colorup.jpg',
-    'assets/drop_the_number.png',
-    'assets/fighter_jet.jpg',
-    'assets/flappy_bird.jpeg',
-    'assets/fruit_ninja.jpg',
-    'assets/infinite_jumper.jpg',
-  ];
-
   @override
   Widget build(BuildContext context) {
-    final visibleGames = _showAllGames ? _gameAssets : _gameAssets.take(6);
+    final balance = ref.watch(balanceProvider);
+    final remoteUrls = ref.watch(remoteUrlsProvider).valueOrNull;
+    final playGamesUrl = remoteUrls?.playGames ?? AppUrls.punoGames;
+
+    final gamesAsync = ref.watch(remoteGamesProvider);
+    final games = gamesAsync.valueOrNull ?? const <RemoteGame>[];
+    final visibleGames = _showAllGames ? games : games.take(6).toList();
+    final gridCount = (gamesAsync.isLoading && games.isEmpty)
+        ? 6
+        : (gamesAsync.hasError && games.isEmpty)
+        ? 1
+        : visibleGames.length;
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.dark.copyWith(
         statusBarColor: Colors.transparent,
@@ -83,20 +82,19 @@ class _PlayGamesScreenState extends State<PlayGamesScreen> {
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: GestureDetector(
-                    onTap: () {
-                      TrackedWebLauncherService.instance.open(
-                        AppUrls.punoGames,
-                        label: 'Top pick',
-                        showDurationToastOnReturn: true,
-                      );
-                    },
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(18),
-                      child: Image.asset(
-                        'assets/featured.png',
-                        fit: BoxFit.cover,
-                      ),
+                  child: Material(
+                    color: Colors.transparent,
+                    borderRadius: BorderRadius.circular(18),
+                    clipBehavior: Clip.antiAlias,
+                    child: InkWell(
+                      onTap: () {
+                        TrackedWebLauncherService.instance.open(
+                          playGamesUrl,
+                          label: 'Top pick',
+                          showDurationToastOnReturn: true,
+                        );
+                      },
+                      child: _FeaturedOfferCard(totalEarn: balance),
                     ),
                   ),
                 ),
@@ -130,20 +128,26 @@ class _PlayGamesScreenState extends State<PlayGamesScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 sliver: SliverGrid(
                   delegate: SliverChildBuilderDelegate((context, index) {
-                    final asset = visibleGames.elementAt(index);
-                    final title = _titleFromAsset(asset);
+                    if (gamesAsync.isLoading && games.isEmpty) {
+                      return const _GamePlaceholder();
+                    }
+                    if (gamesAsync.hasError && games.isEmpty) {
+                      return const _GameErrorTile();
+                    }
+
+                    final game = visibleGames[index];
                     return _GameCard(
-                      title: title,
-                      asset: asset,
+                      title: game.name,
+                      imageUrl: game.imageUrl,
                       onTap: () {
                         TrackedWebLauncherService.instance.open(
-                          AppUrls.punoGames,
-                          label: title,
+                          game.url ?? playGamesUrl,
+                          label: game.name,
                           showDurationToastOnReturn: true,
                         );
                       },
                     );
-                  }, childCount: visibleGames.length),
+                  }, childCount: gridCount),
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
                     crossAxisSpacing: 12,
@@ -177,15 +181,146 @@ class _PlayGamesScreenState extends State<PlayGamesScreen> {
   }
 }
 
+class _FeaturedOfferCard extends StatelessWidget {
+  const _FeaturedOfferCard({required this.totalEarn});
+
+  final int totalEarn;
+
+  @override
+  Widget build(BuildContext context) {
+    const bottomBarHeight = 92.0;
+
+    return SizedBox(
+      height: 290,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          Image.asset('assets/bg.png', fit: BoxFit.cover),
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Color(0x662A200F), Color(0x992A200F)],
+              ),
+            ),
+          ),
+          Positioned(
+            top: 14,
+            left: 14,
+            child: Image.asset(
+              'assets/multi.png',
+              height: 28,
+              fit: BoxFit.contain,
+              filterQuality: FilterQuality.high,
+            ),
+          ),
+          // Positioned.fill(
+          //   bottom: bottomBarHeight,
+          //   child: Center(
+          //     child: Image.asset(
+          //       'assets/puno.png',
+          //       width: 120,
+          //       fit: BoxFit.contain,
+          //       filterQuality: FilterQuality.high,
+          //     ),
+          //   ),
+          // ),
+          Positioned(
+            left: 16,
+            right: 16,
+            bottom: bottomBarHeight + 14,
+            child: const Text(
+              'PunoGames',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w900,
+                fontSize: 26,
+                height: 1.1,
+              ),
+            ),
+          ),
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: Container(
+              height: bottomBarHeight,
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+              color: Colors.white,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Image.asset(
+                          'assets/puno_icon.png',
+                          width: 40,
+                          height: 40,
+                          fit: BoxFit.contain,
+                          filterQuality: FilterQuality.high,
+                        ),
+                        const SizedBox(width: 12),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Text(
+                              'TOTAL EARNED',
+                              style: TextStyle(
+                                color: Color(0xFF8B8B8B),
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 0.6,
+                              ),
+                            ),
+                            const SizedBox(height: 1),
+                            Row(
+                              children: [
+                                Text(
+                                  '$totalEarn',
+                                  style: const TextStyle(
+                                    color: Color(0xFF2A200F),
+                                    fontWeight: FontWeight.w900,
+                                    fontSize: 30,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Image.asset(
+                                  'assets/rbx.png',
+                                  width: 26,
+                                  height: 26,
+                                  fit: BoxFit.contain,
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  Image.asset(
+                    'assets/play_now.png',
+                    height: 46,
+                    fit: BoxFit.contain,
+                    filterQuality: FilterQuality.high,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _GameCard extends StatelessWidget {
   const _GameCard({
     required this.title,
-    required this.asset,
+    required this.imageUrl,
     required this.onTap,
   });
 
   final String title;
-  final String asset;
+  final String imageUrl;
   final VoidCallback onTap;
 
   @override
@@ -209,7 +344,25 @@ class _GameCard extends StatelessWidget {
                   child: Stack(
                     children: [
                       Positioned.fill(
-                        child: Image.asset(asset, fit: BoxFit.cover),
+                        child: Image.network(
+                          imageUrl,
+                          fit: BoxFit.cover,
+                          filterQuality: FilterQuality.medium,
+                          loadingBuilder: (context, child, progress) {
+                            if (progress == null) return child;
+                            return Container(color: const Color(0xFFF1E6D1));
+                          },
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              color: const Color(0xFFF1E6D1),
+                              alignment: Alignment.center,
+                              child: const Icon(
+                                Icons.broken_image,
+                                color: Color(0x992A200F),
+                              ),
+                            );
+                          },
+                        ),
                       ),
                       Positioned(
                         top: 8,
@@ -283,6 +436,73 @@ class _GameCard extends StatelessWidget {
   }
 }
 
+class _GamePlaceholder extends StatelessWidget {
+  const _GamePlaceholder();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFFFDFBF6),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      padding: const EdgeInsets.all(10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Container(
+              decoration: BoxDecoration(
+                color: const Color(0xFFF1E6D1),
+                borderRadius: BorderRadius.circular(14),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Container(
+            height: 14,
+            width: 90,
+            decoration: BoxDecoration(
+              color: const Color(0xFFF1E6D1),
+              borderRadius: BorderRadius.circular(999),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Container(
+            height: 14,
+            width: 60,
+            decoration: BoxDecoration(
+              color: const Color(0xFFF1E6D1),
+              borderRadius: BorderRadius.circular(999),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _GameErrorTile extends StatelessWidget {
+  const _GameErrorTile();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFFFDFBF6),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      alignment: Alignment.center,
+      padding: const EdgeInsets.all(14),
+      child: const Text(
+        'Failed to load games',
+        textAlign: TextAlign.center,
+        style: TextStyle(color: Color(0x992A200F), fontWeight: FontWeight.w800),
+      ),
+    );
+  }
+}
+
 class _BottomNavBar extends StatelessWidget {
   const _BottomNavBar({required this.selectedIndex, required this.onSelected});
 
@@ -349,25 +569,30 @@ class _NavItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = selected ? const Color(0xFF2A200F) : const Color(0x992A200F);
-    return InkWell(
+    return Material(
+      color: Colors.transparent,
       borderRadius: BorderRadius.circular(16),
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Image.asset(asset, width: 24, height: 24, color: color),
-            const SizedBox(height: 6),
-            Text(
-              label,
-              style: TextStyle(
-                color: color,
-                fontWeight: FontWeight.w800,
-                fontSize: 12,
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Image.asset(asset, width: 24, height: 24, color: color),
+              const SizedBox(height: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  color: color,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 12,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -401,19 +626,4 @@ class _SeeAllButton extends StatelessWidget {
       ),
     );
   }
-}
-
-String _titleFromAsset(String assetPath) {
-  var name = assetPath.split('/').last;
-  final dot = name.lastIndexOf('.');
-  if (dot >= 0) name = name.substring(0, dot);
-
-  final parts = name.split('_').where((p) => p.isNotEmpty);
-  final words = parts.map((p) {
-    if (RegExp(r'^[0-9]+$').hasMatch(p)) return p;
-    final lower = p.toLowerCase();
-    if (lower.length == 1) return lower.toUpperCase();
-    return lower[0].toUpperCase() + lower.substring(1);
-  });
-  return words.join(' ');
 }

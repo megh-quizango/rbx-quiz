@@ -93,23 +93,31 @@ class _RedeemCoinsScreenState extends ConsumerState<RedeemCoinsScreen> {
                     const SizedBox(height: 18),
                     SizedBox(
                       width: 220,
-                      child: TextField(
-                        controller: _coinsController,
-                        keyboardType: TextInputType.number,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontSize: 72,
-                          fontWeight: FontWeight.w900,
-                          color: Color(0xFF2A200F),
+                      child: TextSelectionTheme(
+                        data: const TextSelectionThemeData(
+                          cursorColor: Color(0xFF2A200F),
+                          selectionColor: Color(0x33E2A321),
+                          selectionHandleColor: Color(0xFFE2A321),
                         ),
-                        decoration: const InputDecoration(
-                          border: InputBorder.none,
-                          isDense: true,
+                        child: TextField(
+                          controller: _coinsController,
+                          keyboardType: TextInputType.number,
+                          textAlign: TextAlign.center,
+                          cursorColor: const Color(0xFF2A200F),
+                          style: const TextStyle(
+                            fontSize: 72,
+                            fontWeight: FontWeight.w900,
+                            color: Color(0xFF2A200F),
+                          ),
+                          decoration: const InputDecoration(
+                            border: InputBorder.none,
+                            isDense: true,
+                          ),
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                          ],
+                          onChanged: (_) => setState(() {}),
                         ),
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                        ],
-                        onChanged: (_) => setState(() {}),
                       ),
                     ),
                     const SizedBox(height: 6),

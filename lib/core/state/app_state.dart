@@ -1,8 +1,13 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 final prefsProvider = Provider<SharedPreferences>((ref) {
   throw UnimplementedError('prefsProvider must be overridden in main()');
+});
+
+final firebaseInitProvider = Provider<Future<FirebaseApp>>((ref) {
+  throw UnimplementedError('firebaseInitProvider must be overridden in main()');
 });
 
 final balanceProvider = NotifierProvider<BalanceNotifier, int>(
@@ -15,7 +20,7 @@ class BalanceNotifier extends Notifier<int> {
   @override
   int build() {
     final prefs = ref.read(prefsProvider);
-    return prefs.getInt(_key) ?? 200;
+    return prefs.getInt(_key) ?? 0;
   }
 
   Future<void> add(int delta) async {
@@ -50,4 +55,37 @@ class SpinRewardGateNotifier extends Notifier<DateTime?> {
     state = now;
     await ref.read(prefsProvider).setInt(_key, now.millisecondsSinceEpoch);
   }
+}
+
+final dailyRbxClaimProvider =
+    NotifierProvider<DailyRbxClaimNotifier, String?>(
+      DailyRbxClaimNotifier.new,
+    );
+
+class DailyRbxClaimNotifier extends Notifier<String?> {
+  static const _key = 'daily_rbx_last_claim_ymd';
+
+  @override
+  String? build() {
+    final prefs = ref.read(prefsProvider);
+    return prefs.getString(_key);
+  }
+
+  bool canClaimToday(DateTime now) {
+    final today = _ymd(now);
+    return state != today;
+  }
+
+  Future<void> markClaimed(DateTime now) async {
+    final today = _ymd(now);
+    state = today;
+    await ref.read(prefsProvider).setString(_key, today);
+  }
+}
+
+String _ymd(DateTime now) {
+  final y = now.year.toString().padLeft(4, '0');
+  final m = now.month.toString().padLeft(2, '0');
+  final d = now.day.toString().padLeft(2, '0');
+  return '$y-$m-$d';
 }

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "48211585848",
+    "project_id": "rbx-quiz-a6cc1",
+    "storage_bucket": "rbx-quiz-a6cc1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:48211585848:android:89dd6fcb860efc9c562fcd",
+        "android_client_info": {
+          "package_name": "com.example.rbx_quiz"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAGGdaNpXF01e0VUGU9dXf5yFZqxPmEwaI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

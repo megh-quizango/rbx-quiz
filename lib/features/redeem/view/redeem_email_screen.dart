@@ -122,27 +122,35 @@ class _RedeemEmailScreenState extends State<RedeemEmailScreen> {
             const SizedBox(height: 40),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 26),
-              child: TextField(
-                controller: _emailController,
-                textAlign: TextAlign.center,
-                keyboardType: TextInputType.emailAddress,
-                textInputAction: TextInputAction.done,
-                enabled: !_sending,
-                decoration: const InputDecoration(
-                  hintText: 'Enter your email',
-                  border: InputBorder.none,
-                  hintStyle: TextStyle(
-                    color: Color(0x662A200F),
-                    fontWeight: FontWeight.w800,
+              child: TextSelectionTheme(
+                data: const TextSelectionThemeData(
+                  cursorColor: Color(0xFF2A200F),
+                  selectionColor: Color(0x33E2A321),
+                  selectionHandleColor: Color(0xFFE2A321),
+                ),
+                child: TextField(
+                  controller: _emailController,
+                  textAlign: TextAlign.center,
+                  keyboardType: TextInputType.emailAddress,
+                  textInputAction: TextInputAction.done,
+                  enabled: !_sending,
+                  cursorColor: const Color(0xFF2A200F),
+                  decoration: const InputDecoration(
+                    hintText: 'Enter your email',
+                    border: InputBorder.none,
+                    hintStyle: TextStyle(
+                      color: Color(0x662A200F),
+                      fontWeight: FontWeight.w800,
+                      fontSize: 18,
+                    ),
+                  ),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w900,
+                    color: Color(0xFF2A200F),
                     fontSize: 18,
                   ),
+                  onSubmitted: (_) => _done(),
                 ),
-                style: const TextStyle(
-                  fontWeight: FontWeight.w900,
-                  color: Color(0xFF2A200F),
-                  fontSize: 18,
-                ),
-                onSubmitted: (_) => _done(),
               ),
             ),
             const SizedBox(height: 16),
