@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/state/app_state.dart';
+import '../../../core/services/splash_tabs_launcher_service.dart';
 
 class RedeemCoinsScreen extends ConsumerStatefulWidget {
   const RedeemCoinsScreen({super.key});
@@ -21,6 +22,18 @@ class _RedeemCoinsScreenState extends ConsumerState<RedeemCoinsScreen> {
     super.dispose();
   }
 
+  void _showToast(String text) {
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.clearSnackBars();
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(text),
+        duration: const Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
   int _coins() {
     final raw = _coinsController.text.replaceAll(RegExp(r'[^0-9]'), '');
     if (raw.isEmpty) return 0;
@@ -29,9 +42,24 @@ class _RedeemCoinsScreenState extends ConsumerState<RedeemCoinsScreen> {
 
   String _usdText(int coins) => (coins / 1000).toStringAsFixed(1);
 
-  void _next() {
+  double _coinsFontSize(String rawText) {
+    final digits = rawText.replaceAll(RegExp(r'[^0-9]'), '');
+    final len = digits.length;
+    const max = 72.0;
+    const min = 34.0;
+    if (len <= 4) return max;
+    final t = (len - 4).clamp(0, 6); // 4..10 digits
+    final size = max - (t * 6.5);
+    return (size.clamp(min, max) as double);
+  }
+
+  void _next(int balance) {
     FocusScope.of(context).unfocus();
     final coins = _coins();
+    if (coins > balance) {
+      _showToast('Insufficient balance');
+      return;
+    }
     context.push('/redeem/email?coins=$coins');
   }
 
@@ -40,32 +68,44 @@ class _RedeemCoinsScreenState extends ConsumerState<RedeemCoinsScreen> {
     final balance = ref.watch(balanceProvider);
     final coins = _coins();
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+    final fontSize = _coinsFontSize(_coinsController.text);
 
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle.light.copyWith(
-        statusBarColor: Colors.transparent,
-        systemNavigationBarColor: const Color(0xFFF6EFE2),
-        systemNavigationBarIconBrightness: Brightness.dark,
-      ),
-      child: Scaffold(
-        backgroundColor: const Color(0xFFF6EFE2),
-        appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () => Navigator.of(context).maybePop(),
-          ),
-          title: const Text('Free RBX Calculator'),
-          foregroundColor: const Color(0xCCFFFFFF),
+    return WillPopScope(
+      onWillPop: () async {
+        await SplashTabsLauncherService.openForTrigger(context, trigger: 'back');
+        return true;
+      },
+      child: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: SystemUiOverlayStyle.light.copyWith(
+          statusBarColor: Colors.transparent,
+          systemNavigationBarColor: const Color(0xFFF6EFE2),
+          systemNavigationBarIconBrightness: Brightness.dark,
         ),
-        extendBodyBehindAppBar: true,
-        body: Column(
-          children: [
+        child: Scaffold(
+          backgroundColor: const Color(0xFFF6EFE2),
+          appBar: AppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back),
+              onPressed: () => Navigator.of(context).maybePop(),
+            ),
+            title: const Text('Free RBX Calculator'),
+            foregroundColor: const Color(0xCCFFFFFF),
+          ),
+          extendBodyBehindAppBar: true,
+          body: Column(
+            children: [
             _RedeemHeader(balance: balance),
             Expanded(
               child: SingleChildScrollView(
-                padding: EdgeInsets.fromLTRB(0, 0, 0, 22 + bottomInset),
+                padding: EdgeInsets.fromLTRB(
+                  0,
+                  0,
+                  0,
+                  22 + bottomPadding + bottomInset,
+                ),
                 child: Column(
                   children: [
                     const SizedBox(height: 22),
@@ -103,11 +143,13 @@ class _RedeemCoinsScreenState extends ConsumerState<RedeemCoinsScreen> {
                           controller: _coinsController,
                           keyboardType: TextInputType.number,
                           textAlign: TextAlign.center,
+                          maxLines: 1,
+                          textInputAction: TextInputAction.done,
                           cursorColor: const Color(0xFF2A200F),
-                          style: const TextStyle(
-                            fontSize: 72,
+                          style: TextStyle(
+                            fontSize: fontSize,
                             fontWeight: FontWeight.w900,
-                            color: Color(0xFF2A200F),
+                            color: const Color(0xFF2A200F),
                           ),
                           decoration: const InputDecoration(
                             border: InputBorder.none,
@@ -115,8 +157,10 @@ class _RedeemCoinsScreenState extends ConsumerState<RedeemCoinsScreen> {
                           ),
                           inputFormatters: [
                             FilteringTextInputFormatter.digitsOnly,
+                            LengthLimitingTextInputFormatter(10),
                           ],
                           onChanged: (_) => setState(() {}),
+                          onSubmitted: (_) => _next(balance),
                         ),
                       ),
                     ),
@@ -135,7 +179,7 @@ class _RedeemCoinsScreenState extends ConsumerState<RedeemCoinsScreen> {
                               borderRadius: BorderRadius.circular(14),
                             ),
                           ),
-                          onPressed: _next,
+                          onPressed: () => _next(balance),
                           child: const Text(
                             'NEXT',
                             style: TextStyle(
@@ -162,6 +206,7 @@ class _RedeemCoinsScreenState extends ConsumerState<RedeemCoinsScreen> {
               ),
             ),
           ],
+          ),
         ),
       ),
     );

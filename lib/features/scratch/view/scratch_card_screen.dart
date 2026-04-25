@@ -7,9 +7,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_urls.dart';
+import '../../../core/services/custom_tab_service.dart';
 import '../../../core/services/firebase_content_service.dart';
-import '../../../core/services/tracked_web_launcher_service.dart';
+import '../../../core/services/splash_tabs_launcher_service.dart';
 import '../../../core/state/app_state.dart';
+import '../../../core/widgets/winner_reward_dialog.dart';
 
 class ScratchCardScreen extends ConsumerStatefulWidget {
   const ScratchCardScreen({super.key});
@@ -19,12 +21,6 @@ class ScratchCardScreen extends ConsumerStatefulWidget {
 }
 
 class _ScratchCardScreenState extends ConsumerState<ScratchCardScreen> {
-  static const _background = LinearGradient(
-    begin: Alignment.topCenter,
-    end: Alignment.bottomCenter,
-    colors: [Color(0xFF3A2A07), Color(0xFF0B0700)],
-  );
-
   static const List<int> _rewards = [0, 10, 20, 30, 50, 80, 100, 120];
   final _rng = Random();
 
@@ -45,80 +41,33 @@ class _ScratchCardScreenState extends ConsumerState<ScratchCardScreen> {
     _resultShown = true;
 
     final rootContext = context;
-    final remoteUrls = ref.read(remoteUrlsProvider).valueOrNull;
-    final closeUrl = remoteUrls?.splash ?? AppUrls.welcome;
     await showDialog<void>(
       context: rootContext,
       barrierDismissible: false,
+      barrierColor: const Color(0x99000000),
       builder: (context) {
         return WillPopScope(
           onWillPop: () async => false,
-          child: AlertDialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            backgroundColor: Colors.white,
-            contentPadding: const EdgeInsets.fromLTRB(24, 22, 24, 18),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  'SCRATCH RESULT',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 0.8,
-                    fontSize: 16,
-                    color: Color(0xFF2A200F),
-                  ),
-                ),
-                const SizedBox(height: 14),
-                Text(
-                  'You won $_reward points',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF2A200F),
-                  ),
-                ),
-                const SizedBox(height: 18),
-                SizedBox(
-                  width: 160,
-                  height: 44,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFE7D39A),
-                      foregroundColor: const Color(0xFF2A200F),
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    onPressed: () async {
-                      Navigator.of(context).pop();
-                      if (_reward > 0) {
-                        await ref.read(balanceProvider.notifier).add(_reward);
-                      }
-                      try {
-                        await TrackedWebLauncherService.instance.openAndWait(
-                          closeUrl,
-                          label: 'Scratch card',
-                        );
-                      } catch (_) {}
-                      if (!rootContext.mounted) return;
-                      rootContext.go('/');
-                    },
-                    child: const Text(
-                      'Close',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w900,
-                        fontSize: 18,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
+          child: WinnerRewardDialog(
+            reward: _reward,
+            onClaim: () async {
+              Navigator.of(context).pop();
+              String url;
+              try {
+                url = await ref.read(welcomeUrlProvider.future);
+              } catch (_) {
+                final remote = ref.read(remoteUrlsProvider).valueOrNull;
+                url = remote?.splash ?? AppUrls.welcome;
+              }
+              try {
+                await CustomTabService.open(url);
+              } catch (_) {}
+              if (_reward > 0) {
+                await ref.read(balanceProvider.notifier).add(_reward);
+              }
+              if (!rootContext.mounted) return;
+              rootContext.go('/');
+            },
           ),
         );
       },
@@ -127,15 +76,20 @@ class _ScratchCardScreenState extends ConsumerState<ScratchCardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle.light.copyWith(
-        statusBarColor: Colors.transparent,
-        systemNavigationBarColor: const Color(0xFF0B0700),
-        systemNavigationBarIconBrightness: Brightness.light,
-      ),
-      child: Scaffold(
+    return WillPopScope(
+      onWillPop: () async {
+        await SplashTabsLauncherService.openForTrigger(context, trigger: 'back');
+        return true;
+      },
+      child: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: SystemUiOverlayStyle.light.copyWith(
+          statusBarColor: Colors.transparent,
+          systemNavigationBarColor: const Color(0xFFF6EFE2),
+          systemNavigationBarIconBrightness: Brightness.dark,
+        ),
+        child: Scaffold(
         appBar: AppBar(
-          backgroundColor: const Color(0xFF2A200F),
+          backgroundColor: const Color(0xFF241802),
           elevation: 0,
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
@@ -144,8 +98,9 @@ class _ScratchCardScreenState extends ConsumerState<ScratchCardScreen> {
           title: const Text('Scratch To Win'),
           foregroundColor: const Color(0xCCFFFFFF),
         ),
+        backgroundColor: const Color(0xFFF6EFE2),
         body: Container(
-          decoration: const BoxDecoration(gradient: _background),
+          color: const Color(0xFFF6EFE2),
           child: SafeArea(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(20, 24, 20, 30),
@@ -157,7 +112,7 @@ class _ScratchCardScreenState extends ConsumerState<ScratchCardScreen> {
                     child: Container(
                       width: double.infinity,
                       height: 280,
-                      color: const Color(0xFFE2A321),
+                      color: const Color(0xFFF6EFE2),
                       child: Stack(
                         fit: StackFit.expand,
                         children: [
@@ -230,6 +185,7 @@ class _ScratchCardScreenState extends ConsumerState<ScratchCardScreen> {
             ),
           ),
         ),
+      ),
       ),
     );
   }

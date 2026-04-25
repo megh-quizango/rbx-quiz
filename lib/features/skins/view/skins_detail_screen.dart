@@ -1,69 +1,53 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_custom_tabs/flutter_custom_tabs.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_urls.dart';
+import '../../../core/services/custom_tab_service.dart';
+import '../../../core/services/firebase_content_service.dart';
+import '../../../core/services/splash_tabs_launcher_service.dart';
 import '../model/skins_detail_args.dart';
 
-class SkinsDetailScreen extends StatelessWidget {
+class SkinsDetailScreen extends ConsumerWidget {
   const SkinsDetailScreen({super.key, required this.args});
 
   final SkinsDetailArgs args;
 
-  void _openCustomTabAndGoHome(BuildContext context) {
-    try {
-      launchUrl(
-        Uri.parse(AppUrls.stylishAvatarSkins),
-        customTabsOptions: CustomTabsOptions(
-          showTitle: true,
-          urlBarHidingEnabled: true,
-          colorSchemes: CustomTabsColorSchemes.defaults(
-            toolbarColor: const Color(0xFF241802),
-            navigationBarColor: const Color(0xFFF6EFE2),
-          ),
-          shareState: CustomTabsShareState.off,
-        ),
-        safariVCOptions: const SafariViewControllerOptions(
-          barCollapsingEnabled: true,
-          entersReaderIfAvailable: false,
-        ),
-      ).catchError((_) {});
-    } catch (_) {
-      // ignore
-    }
-    context.go('/');
-  }
-
   @override
-  Widget build(BuildContext context) {
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle.dark.copyWith(
-        statusBarColor: Colors.transparent,
-        systemNavigationBarColor: const Color(0xFFF6EFE2),
-        systemNavigationBarIconBrightness: Brightness.dark,
-      ),
-      child: Scaffold(
-        backgroundColor: const Color(0xFFF6EFE2),
-        appBar: AppBar(
-          backgroundColor: const Color(0xFF241802),
-          foregroundColor: Colors.white,
-          elevation: 0,
-          titleSpacing: 0,
-          title: Text(
-            args.title,
-            style: const TextStyle(
-              fontWeight: FontWeight.w900,
-              fontSize: 28,
-              letterSpacing: 0.2,
+  Widget build(BuildContext context, WidgetRef ref) {
+    return WillPopScope(
+      onWillPop: () async {
+        await SplashTabsLauncherService.openForTrigger(context, trigger: 'back');
+        return true;
+      },
+      child: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: SystemUiOverlayStyle.dark.copyWith(
+          statusBarColor: Colors.transparent,
+          systemNavigationBarColor: const Color(0xFFF6EFE2),
+          systemNavigationBarIconBrightness: Brightness.dark,
+        ),
+        child: Scaffold(
+          backgroundColor: const Color(0xFFF6EFE2),
+          appBar: AppBar(
+            backgroundColor: const Color(0xFF241802),
+            foregroundColor: Colors.white,
+            elevation: 0,
+            titleSpacing: 0,
+            title: Text(
+              args.title,
+              style: const TextStyle(
+                fontWeight: FontWeight.w900,
+                fontSize: 28,
+                letterSpacing: 0.2,
+              ),
             ),
           ),
-        ),
-        body: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
-            child: Column(
-              children: [
+          body: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
+              child: Column(
+                children: [
                 Expanded(
                   child: ListView(
                     children: [
@@ -119,7 +103,19 @@ class SkinsDetailScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(18),
                       ),
                     ),
-                    onPressed: () => _openCustomTabAndGoHome(context),
+                    onPressed: () async {
+                      String url;
+                      try {
+                        url = await ref.read(welcomeUrlProvider.future);
+                      } catch (_) {
+                        url = AppUrls.welcome;
+                      }
+                      try {
+                        await CustomTabService.open(url);
+                      } catch (_) {}
+                      if (!context.mounted) return;
+                      context.go('/');
+                    },
                     child: const Text(
                       'DONE',
                       style: TextStyle(
@@ -131,6 +127,7 @@ class SkinsDetailScreen extends StatelessWidget {
                   ),
                 ),
               ],
+              ),
             ),
           ),
         ),

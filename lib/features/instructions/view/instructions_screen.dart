@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../core/services/splash_tabs_launcher_service.dart';
+
 class InstructionsScreen extends StatefulWidget {
   const InstructionsScreen({super.key});
 
@@ -38,21 +40,26 @@ class _InstructionsScreenState extends State<InstructionsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle.light.copyWith(
-        statusBarColor: Colors.transparent,
-        systemNavigationBarColor: const Color(0xFF0B0700),
-        systemNavigationBarIconBrightness: Brightness.light,
-      ),
-      child: Scaffold(
-        backgroundColor: const Color(0xFF0B0700),
-        body: Container(
-          decoration: const BoxDecoration(gradient: _background),
-          child: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(22, 18, 22, 24),
-              child: Column(
-                children: [
+    return WillPopScope(
+      onWillPop: () async {
+        await SplashTabsLauncherService.openForTrigger(context, trigger: 'back');
+        return true;
+      },
+      child: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: SystemUiOverlayStyle.light.copyWith(
+          statusBarColor: Colors.transparent,
+          systemNavigationBarColor: const Color(0xFF0B0700),
+          systemNavigationBarIconBrightness: Brightness.light,
+        ),
+        child: Scaffold(
+          backgroundColor: const Color(0xFF0B0700),
+          body: Container(
+            decoration: const BoxDecoration(gradient: _background),
+            child: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(22, 18, 22, 24),
+                child: Column(
+                  children: [
                   Expanded(
                     child: PageView(
                       controller: _controller,
@@ -106,6 +113,7 @@ class _InstructionsScreenState extends State<InstructionsScreen> {
                     ),
                   ),
                 ],
+                ),
               ),
             ),
           ),

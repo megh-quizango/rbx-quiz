@@ -3,8 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_urls.dart';
+import '../../../core/services/custom_tab_service.dart';
 import '../../../core/services/firebase_content_service.dart';
-import '../../../core/services/tracked_web_launcher_service.dart';
+import '../../../core/services/splash_tabs_launcher_service.dart';
 import '../model/calculator_options.dart';
 
 class RbxConversionScreen extends ConsumerStatefulWidget {
@@ -59,40 +60,47 @@ class _RbxConversionScreenState extends ConsumerState<RbxConversionScreen> {
   Widget build(BuildContext context) {
     final spec = widget.spec;
     final remoteUrls = ref.watch(remoteUrlsProvider).valueOrNull;
-    final doneUrl = remoteUrls?.splash ?? AppUrls.welcome;
+    final doneUrl = ref.watch(welcomeUrlProvider).valueOrNull ??
+        remoteUrls?.splash ??
+        AppUrls.welcome;
 
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle.light.copyWith(
-        statusBarColor: Colors.transparent,
-        systemNavigationBarColor: const Color(0xFF0B0700),
-        systemNavigationBarIconBrightness: Brightness.light,
-      ),
-      child: Scaffold(
-        appBar: AppBar(
-          backgroundColor: const Color(0xFF2A200F),
-          elevation: 0,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () => Navigator.of(context).maybePop(),
-          ),
-          title: Text(spec.title),
-          foregroundColor: const Color(0xCCFFFFFF),
+    return WillPopScope(
+      onWillPop: () async {
+        await SplashTabsLauncherService.openForTrigger(context, trigger: 'back');
+        return true;
+      },
+      child: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: SystemUiOverlayStyle.light.copyWith(
+          statusBarColor: Colors.transparent,
+          systemNavigationBarColor: const Color(0xFF0B0700),
+          systemNavigationBarIconBrightness: Brightness.light,
         ),
-        body: Container(
-          decoration: const BoxDecoration(gradient: _background),
-          child: SafeArea(
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                return SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(20, 22, 20, 22),
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      minHeight: constraints.maxHeight,
-                    ),
-                    child: IntrinsicHeight(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
+        child: Scaffold(
+          appBar: AppBar(
+            backgroundColor: const Color(0xFF2A200F),
+            elevation: 0,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back),
+              onPressed: () => Navigator.of(context).maybePop(),
+            ),
+            title: Text(spec.title),
+            foregroundColor: const Color(0xCCFFFFFF),
+          ),
+          body: Container(
+            decoration: const BoxDecoration(gradient: _background),
+            child: SafeArea(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(20, 22, 20, 22),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minHeight: constraints.maxHeight,
+                      ),
+                      child: IntrinsicHeight(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
                           Text(
                             'Enter Your ${spec.inputUnit}',
                             style: const TextStyle(
@@ -211,12 +219,7 @@ class _RbxConversionScreenState extends ConsumerState<RbxConversionScreen> {
                                     onPressed: () async {
                                       FocusScope.of(context).unfocus();
                                       try {
-                                        await TrackedWebLauncherService
-                                            .instance
-                                            .openAndWait(
-                                          doneUrl,
-                                          label: spec.title,
-                                        );
+                                        await CustomTabService.open(doneUrl);
                                       } catch (_) {}
                                       if (!mounted) return;
                                       Navigator.of(context).maybePop();
@@ -234,12 +237,13 @@ class _RbxConversionScreenState extends ConsumerState<RbxConversionScreen> {
                             ),
                           ),
                           const Spacer(),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                );
-              },
+                  );
+                },
+              ),
             ),
           ),
         ),

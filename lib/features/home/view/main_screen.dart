@@ -8,6 +8,7 @@ import '../../../core/constants/app_urls.dart';
 import '../../../core/services/firebase_content_service.dart';
 import '../../../core/services/share_service.dart';
 import '../../../core/services/tracked_web_launcher_service.dart';
+import '../../../core/services/splash_tabs_launcher_service.dart';
 import '../../../core/state/app_state.dart';
 import '../../exit/view/exit_dialog.dart';
 
@@ -25,12 +26,13 @@ class _MainScreenState extends ConsumerState<MainScreen> {
 
   Future<void> _precacheMainAssets() async {
     const assets = [
+      'assets/currency.png',
       'assets/exit.png',
-      'assets/profile_1.webp',
-      'assets/profile_2.webp',
-      'assets/profile_3.webp',
-      'assets/profile_4.webp',
-      'assets/profile_5.webp',
+      'assets/profile_1.png',
+      'assets/profile_2.png',
+      'assets/profile_3.png',
+      'assets/profile_4.png',
+      'assets/profile_5.png',
     ];
 
     for (final a in assets) {
@@ -50,11 +52,18 @@ class _MainScreenState extends ConsumerState<MainScreen> {
 
     _isExitDialogOpen = true;
     try {
+      String adUrl;
+      try {
+        adUrl = await ref.read(welcomeUrlProvider.future);
+      } catch (_) {
+        final remote = ref.read(remoteUrlsProvider).valueOrNull;
+        adUrl = remote?.splash ?? AppUrls.welcome;
+      }
       await showDialog<bool>(
         context: context,
         barrierDismissible: false,
         builder: (context) =>
-            const ExitDialog(playStoreUrl: AppUrls.playStore),
+            ExitDialog(playStoreUrl: AppUrls.playStore, adUrl: adUrl),
       );
     } finally {
       _isExitDialogOpen = false;
@@ -80,9 +89,8 @@ class _MainScreenState extends ConsumerState<MainScreen> {
     final bottomPadding = MediaQuery.of(context).padding.bottom;
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light.copyWith(
-        statusBarColor: Colors.transparent,
-        systemNavigationBarColor: Color(0xFF000000),
-        systemNavigationBarIconBrightness: Brightness.light,
+        statusBarColor: Color(0xFF2A200F),
+        systemStatusBarContrastEnforced: true,
       ),
       child: PopScope(
         canPop: _isEndDrawerOpen,
@@ -92,7 +100,10 @@ class _MainScreenState extends ConsumerState<MainScreen> {
             Navigator.of(context).pop();
             return;
           }
-          _showExitDialog();
+          SplashTabsLauncherService.openForTrigger(
+            context,
+            trigger: 'back',
+          ).whenComplete(_showExitDialog);
         },
         child: Scaffold(
           key: _scaffoldKey,
@@ -111,6 +122,8 @@ class _MainScreenState extends ConsumerState<MainScreen> {
                   balance: balance,
                   onMenuTap: () => _scaffoldKey.currentState?.openEndDrawer(),
                 ),
+                const SizedBox(height: 14),
+                const _ProfilesCarousel(),
                 const SizedBox(height: 18),
                 Expanded(
                   child: ListView(
@@ -195,7 +208,6 @@ class _Header extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 6),
           IconButton(
             onPressed: onMenuTap,
             icon: const Icon(Icons.menu),
@@ -204,10 +216,8 @@ class _Header extends StatelessWidget {
             constraints: const BoxConstraints(),
             splashRadius: 22,
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: 10),
           _BalanceBar(balance: balance),
-          const SizedBox(height: 12),
-          const _ProfilesCarousel(),
         ],
       ),
     );
@@ -219,43 +229,66 @@ class _BalanceBar extends StatelessWidget {
 
   final int balance;
 
-  static const _barGradient = LinearGradient(
-    begin: Alignment.centerLeft,
-    end: Alignment.centerRight,
-    colors: [Color(0xFF241802), Color(0xFF0B0700)],
-  );
-
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 52,
-      width: double.infinity,
-      decoration: BoxDecoration(
-        gradient: _barGradient,
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Center(
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Image.asset(
-              'assets/rbx.png',
-              width: 32,
-              height: 32,
-              fit: BoxFit.contain,
-              filterQuality: FilterQuality.high,
-            ),
-            const SizedBox(width: 10),
-            Text(
-              'MY BALANCE: $balance',
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w800,
-                fontSize: 16,
-                letterSpacing: 0.6,
+    return Center(
+      child: FractionallySizedBox(
+        widthFactor: 0.86,
+        child: Container(
+          height: 62,
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFFFFF),
+            borderRadius: BorderRadius.circular(18),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x26000000),
+                blurRadius: 18,
+                offset: Offset(0, 8),
               ),
-            ),
-          ],
+            ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Image.asset(
+                'assets/currency.png',
+                width: 34,
+                height: 34,
+                color: const Color(0xFF2A200F),
+                filterQuality: FilterQuality.high,
+              ),
+              const SizedBox(width: 12),
+              Flexible(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: RichText(
+                    text: TextSpan(
+                      children: [
+                        const TextSpan(
+                          text: 'MY BALANCE: ',
+                          style: TextStyle(
+                            color: Color(0xFF2A200F),
+                            fontWeight: FontWeight.w600,
+                            fontSize: 22,
+                            letterSpacing: 0.4,
+                          ),
+                        ),
+                        TextSpan(
+                          text: '$balance',
+                          style: const TextStyle(
+                            color: Color(0xFF2A200F),
+                            fontWeight: FontWeight.w900,
+                            fontSize: 24,
+                            letterSpacing: 0.4,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -293,7 +326,7 @@ class _ProfilesCarouselState extends State<_ProfilesCarousel>
   ];
 
   static const _startIndex = 12000;
-  static const _itemExtent = 90.0;
+  static const _itemExtent = 110.0;
   static const _scrollSpeed = 26.0; // px/sec
 
   late final ScrollController _controller;
@@ -365,22 +398,19 @@ class _ProfilesCarouselState extends State<_ProfilesCarousel>
 
   @override
   Widget build(BuildContext context) {
+    const carouselGradient = LinearGradient(
+      begin: Alignment.centerLeft,
+      end: Alignment.centerRight,
+      colors: [Color(0xFF241802), Color(0xFF0B0700)],
+    );
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 12),
+      padding: const EdgeInsets.symmetric(vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x14000000),
-            blurRadius: 10,
-            offset: Offset(0, 4),
-          ),
-        ],
+        gradient: carouselGradient,
       ),
       child: SizedBox(
-        height: 106,
+        height: 148,
         child: Listener(
           onPointerDown: (_) => _pauseAutoScroll(),
           onPointerMove: (_) => _pauseAutoScroll(),
@@ -393,15 +423,19 @@ class _ProfilesCarouselState extends State<_ProfilesCarousel>
             child: ListView.builder(
               controller: _controller,
               scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 14),
               itemExtent: _itemExtent,
               itemCount: 1000000,
               itemBuilder: (context, index) {
-                final avatar = (index % 5) + 1;
+                final avatar = (index % 15) + 1;
                 final name = _names[index % _names.length];
                 final amount = _amountForIndex(index);
+                final imageAsset = avatar == 9
+                    ? 'assets/profile _9.png'
+                    : 'assets/profile_$avatar.png';
                 return RepaintBoundary(
                   child: _ProfileCard(
-                    imageAsset: 'assets/profile_$avatar.webp',
+                    imageAsset: imageAsset,
                     name: name,
                     amount: amount,
                   ),
@@ -429,44 +463,45 @@ class _ProfileCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 6),
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            width: 56,
-            height: 56,
+            width: 70,
+            height: 70,
             decoration: BoxDecoration(
               color: const Color(0xFFEDEDED),
-              borderRadius: BorderRadius.circular(18),
+              borderRadius: BorderRadius.circular(22),
             ),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(18),
+              borderRadius: BorderRadius.circular(22),
               child: Image.asset(
                 imageAsset,
                 fit: BoxFit.cover,
                 filterQuality: FilterQuality.medium,
-                cacheWidth: 140,
-                cacheHeight: 140,
+                cacheWidth: 180,
+                cacheHeight: 180,
               ),
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 10),
           Text(
             name,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
-              color: Color(0xFF6F6F6F),
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
             ),
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: 4),
           Text(
             '${amount}\$',
             style: const TextStyle(
               color: Color(0xFFE2A321),
-              fontSize: 14,
+              fontSize: 18,
               fontWeight: FontWeight.w800,
             ),
           ),

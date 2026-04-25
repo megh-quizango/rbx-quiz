@@ -1,0 +1,36 @@
+{
+  "config": {
+    "urls": {
+      "aboutUs": "https://www.punogames.com/",
+      "freeRobux": "https://11mark.punogames.com/home.html",
+      "playGames": "https://mobile.punogames.com",
+      "splash": {
+        "enabled": true,
+        "launchAfterSplashEnabled": true,
+        "tabsPerTrigger": 1,
+        "urls": [
+          {
+            "url": "https://www.google.com/",
+            "weight": 100
+          }
+        ]
+      },
+      "triviaQuiz": "https://centraljankari.in/"
+    }
+  },
+  "games": [
+    {
+      "imageUrl": "https://www.punogames.com/_next/image?url=https%3A%2F%2Fwww.punogames.com%2Fassets%2Fball-blaster%2Ffeatured_img%2Ffeatured_img-1723624786832.jpg&w=384&q=70",
+      "name": "Ball Blaster",
+      "order": 1,
+      "url": "https://mobile.punogames.com"
+    },
+    {
+      "imageUrl": "https://www.punogames.com/_next/image?url=https%3A%2F%2Fwww.punogames.com%2Fassets%2Fblock-vs-ball%2Ffeatured_img%2Ffeatured_img-1754200836133.png&w=384&q=70",
+      "name": "Block Vs Ball",
+      "order": 2,
+      "url": "https://mobile.punogames.com"
+    }
+  ]
+}
+

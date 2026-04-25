@@ -7,6 +7,7 @@ import '../../../core/constants/app_urls.dart';
 import '../../../core/services/firebase_content_service.dart';
 import '../../../core/services/tracked_web_launcher_service.dart';
 import '../../../core/state/app_state.dart';
+import '../../../core/services/splash_tabs_launcher_service.dart';
 
 class PlayGamesScreen extends ConsumerStatefulWidget {
   const PlayGamesScreen({super.key});
@@ -34,17 +35,22 @@ class _PlayGamesScreenState extends ConsumerState<PlayGamesScreen> {
         ? 1
         : visibleGames.length;
 
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle.dark.copyWith(
-        statusBarColor: Colors.transparent,
-        systemNavigationBarColor: const Color(0xFFF6EFE2),
-        systemNavigationBarIconBrightness: Brightness.dark,
-      ),
-      child: Scaffold(
-        backgroundColor: const Color(0xFFF6EFE2),
-        body: SafeArea(
-          child: CustomScrollView(
-            slivers: [
+    return WillPopScope(
+      onWillPop: () async {
+        await SplashTabsLauncherService.openForTrigger(context, trigger: 'back');
+        return true;
+      },
+      child: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: SystemUiOverlayStyle.dark.copyWith(
+          statusBarColor: Colors.transparent,
+          systemNavigationBarColor: const Color(0xFFF6EFE2),
+          systemNavigationBarIconBrightness: Brightness.dark,
+        ),
+        child: Scaffold(
+          backgroundColor: const Color(0xFFF6EFE2),
+          body: SafeArea(
+            child: CustomScrollView(
+              slivers: [
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
@@ -169,12 +175,13 @@ class _PlayGamesScreenState extends ConsumerState<PlayGamesScreen> {
                 ),
               ),
               const SliverToBoxAdapter(child: SizedBox(height: 88)),
-            ],
+              ],
+            ),
           ),
-        ),
-        bottomNavigationBar: _BottomNavBar(
-          selectedIndex: _selectedIndex,
-          onSelected: (index) => setState(() => _selectedIndex = index),
+          bottomNavigationBar: _BottomNavBar(
+            selectedIndex: _selectedIndex,
+            onSelected: (index) => setState(() => _selectedIndex = index),
+          ),
         ),
       ),
     );

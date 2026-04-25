@@ -6,9 +6,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_urls.dart';
+import '../../../core/services/custom_tab_service.dart';
 import '../../../core/services/firebase_content_service.dart';
-import '../../../core/services/tracked_web_launcher_service.dart';
+import '../../../core/services/splash_tabs_launcher_service.dart';
 import '../../../core/state/app_state.dart';
+import '../../../core/widgets/winner_reward_dialog.dart';
 
 class SpinToWinScreen extends ConsumerStatefulWidget {
   const SpinToWinScreen({super.key});
@@ -19,12 +21,6 @@ class SpinToWinScreen extends ConsumerStatefulWidget {
 
 class _SpinToWinScreenState extends ConsumerState<SpinToWinScreen>
     with SingleTickerProviderStateMixin, WidgetsBindingObserver {
-  static const _background = LinearGradient(
-    begin: Alignment.topCenter,
-    end: Alignment.bottomCenter,
-    colors: [Color(0xFF3A2A07), Color(0xFF0B0700)],
-  );
-
   static const List<int> _segments = [100, 30, 10, 0, 50, 20, 80, 120];
 
   late final AnimationController _controller;
@@ -107,85 +103,39 @@ class _SpinToWinScreenState extends ConsumerState<SpinToWinScreen>
     final reward = _pendingReward;
     _pendingReward = 0;
 
-    if (reward > 0) await ref.read(balanceProvider.notifier).add(reward);
-
     if (!mounted) return;
     await _showResultDialog(reward);
   }
 
   Future<void> _showResultDialog(int reward) async {
     final rootContext = context;
-    final remoteUrls = ref.read(remoteUrlsProvider).valueOrNull;
-    final closeUrl = remoteUrls?.splash ?? AppUrls.welcome;
     await showDialog<void>(
       context: rootContext,
       barrierDismissible: false,
+      barrierColor: const Color(0x99000000),
       builder: (context) {
         return WillPopScope(
           onWillPop: () async => false,
-          child: AlertDialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            backgroundColor: Colors.white,
-            contentPadding: const EdgeInsets.fromLTRB(24, 22, 24, 18),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  'SPIN RESULT',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 0.8,
-                    fontSize: 16,
-                    color: Color(0xFF2A200F),
-                  ),
-                ),
-                const SizedBox(height: 14),
-                Text(
-                  'You won $reward points',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF2A200F),
-                  ),
-                ),
-                const SizedBox(height: 18),
-                SizedBox(
-                  width: 160,
-                  height: 44,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFE7D39A),
-                      foregroundColor: const Color(0xFF2A200F),
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    onPressed: () async {
-                      Navigator.of(context).pop();
-                      try {
-                        await TrackedWebLauncherService.instance.openAndWait(
-                          closeUrl,
-                          label: 'Spin to win',
-                        );
-                      } catch (_) {}
-                      if (!rootContext.mounted) return;
-                      rootContext.go('/');
-                    },
-                    child: const Text(
-                      'Close',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w900,
-                        fontSize: 18,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
+          child: WinnerRewardDialog(
+            reward: reward,
+            onClaim: () async {
+              Navigator.of(context).pop();
+              String url;
+              try {
+                url = await ref.read(welcomeUrlProvider.future);
+              } catch (_) {
+                final remote = ref.read(remoteUrlsProvider).valueOrNull;
+                url = remote?.splash ?? AppUrls.welcome;
+              }
+              try {
+                await CustomTabService.open(url);
+              } catch (_) {}
+              if (reward > 0) {
+                await ref.read(balanceProvider.notifier).add(reward);
+              }
+              if (!rootContext.mounted) return;
+              rootContext.go('/');
+            },
           ),
         );
       },
@@ -212,17 +162,18 @@ class _SpinToWinScreenState extends ConsumerState<SpinToWinScreen>
           _cancelSpin();
           return false;
         }
+        await SplashTabsLauncherService.openForTrigger(context, trigger: 'back');
         return true;
       },
       child: AnnotatedRegion<SystemUiOverlayStyle>(
         value: SystemUiOverlayStyle.light.copyWith(
           statusBarColor: Colors.transparent,
-          systemNavigationBarColor: const Color(0xFF0B0700),
-          systemNavigationBarIconBrightness: Brightness.light,
+          systemNavigationBarColor: const Color(0xFFF6EFE2),
+          systemNavigationBarIconBrightness: Brightness.dark,
         ),
         child: Scaffold(
           appBar: AppBar(
-            backgroundColor: Color(0xFF2A200F),
+            backgroundColor: const Color(0xFF241802),
             elevation: 0,
             leading: IconButton(
               icon: const Icon(Icons.arrow_back),
@@ -237,8 +188,9 @@ class _SpinToWinScreenState extends ConsumerState<SpinToWinScreen>
             title: const Text('Spin To Win'),
             foregroundColor: const Color(0xCCFFFFFF),
           ),
+          backgroundColor: const Color(0xFFF6EFE2),
           body: Container(
-            decoration: const BoxDecoration(gradient: _background),
+            color: const Color(0xFFF6EFE2),
             child: SafeArea(
               child: Column(
                 children: [
@@ -253,6 +205,7 @@ class _SpinToWinScreenState extends ConsumerState<SpinToWinScreen>
                             child: _Wheel(
                               rotation: rotation,
                               segments: _segments,
+                              onCenterTap: _isSpinning ? null : _startSpin,
                             ),
                           );
                         },
@@ -296,10 +249,15 @@ class _SpinToWinScreenState extends ConsumerState<SpinToWinScreen>
 }
 
 class _Wheel extends StatelessWidget {
-  const _Wheel({required this.rotation, required this.segments});
+  const _Wheel({
+    required this.rotation,
+    required this.segments,
+    required this.onCenterTap,
+  });
 
   final double rotation;
   final List<int> segments;
+  final VoidCallback? onCenterTap;
 
   @override
   Widget build(BuildContext context) {
@@ -344,16 +302,63 @@ class _Wheel extends StatelessWidget {
                   fit: BoxFit.contain,
                 ),
               ),
-              Image.asset(
-                'assets/center.png',
-                width: radius * 0.22,
-                height: radius * 0.22,
-                fit: BoxFit.contain,
+              _SpinCenterButton(
+                size: radius * 0.34,
+                onTap: onCenterTap,
               ),
             ],
           ),
         );
       },
+    );
+  }
+}
+
+class _SpinCenterButton extends StatelessWidget {
+  const _SpinCenterButton({required this.size, required this.onTap});
+
+  final double size;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      shape: const CircleBorder(),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        customBorder: const CircleBorder(),
+        child: SizedBox(
+          width: size * 1.5,
+          height: size * 1.5,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              Image.asset(
+                'assets/bg.png',
+                width: size * 1.5,
+                height: size * 1.5,
+                fit: BoxFit.contain,
+                filterQuality: FilterQuality.high,
+              ),
+              Image.asset(
+                'assets/bg_border.png',
+                width: size * 1.3,
+                height: size * 1.3,
+                fit: BoxFit.contain,
+                filterQuality: FilterQuality.high,
+              ),
+              Image.asset(
+                'assets/spin_text.png',
+                width: size * 0.76,
+                fit: BoxFit.contain,
+                filterQuality: FilterQuality.high,
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

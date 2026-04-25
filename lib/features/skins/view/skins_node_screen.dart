@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import '../model/skins_catalog.dart';
+import '../../../core/services/splash_tabs_launcher_service.dart';
 
 class SkinsNodeScreen extends StatelessWidget {
   const SkinsNodeScreen({super.key, required this.nodeId});
@@ -16,56 +17,68 @@ class SkinsNodeScreen extends StatelessWidget {
       return const _NotFoundScreen();
     }
 
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle.dark.copyWith(
-        statusBarColor: Colors.transparent,
-        systemNavigationBarColor: const Color(0xFFF6EFE2),
-        systemNavigationBarIconBrightness: Brightness.dark,
-      ),
-      child: Scaffold(
-        backgroundColor: const Color(0xFFF6EFE2),
-        appBar: AppBar(
-          backgroundColor: const Color(0xFF241802),
-          foregroundColor: Colors.white,
-          elevation: 0,
-          titleSpacing: 0,
-          title: Text(
-            node.title,
-            style: const TextStyle(
-              fontWeight: FontWeight.w900,
-              fontSize: 28,
-              letterSpacing: 0.2,
+    return WillPopScope(
+      onWillPop: () async {
+        await SplashTabsLauncherService.openForTrigger(context, trigger: 'back');
+        return true;
+      },
+      child: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: SystemUiOverlayStyle.dark.copyWith(
+          statusBarColor: Colors.transparent,
+          systemNavigationBarColor: const Color(0xFFF6EFE2),
+          systemNavigationBarIconBrightness: Brightness.dark,
+        ),
+        child: Scaffold(
+          backgroundColor: const Color(0xFFF6EFE2),
+          appBar: AppBar(
+            backgroundColor: const Color(0xFF241802),
+            foregroundColor: Colors.white,
+            elevation: 0,
+            titleSpacing: 0,
+            title: Text(
+              node.title,
+              style: const TextStyle(
+                fontWeight: FontWeight.w900,
+                fontSize: 28,
+                letterSpacing: 0.2,
+              ),
             ),
           ),
-        ),
-        body: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 18),
-            child: GridView.builder(
-              itemCount: node.entries.length,
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 14,
-                mainAxisSpacing: 14,
-                childAspectRatio: 0.92,
+          body: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 18),
+              child: GridView.builder(
+                itemCount: node.entries.length,
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 14,
+                  mainAxisSpacing: 14,
+                  childAspectRatio: 0.92,
+                ),
+                itemBuilder: (context, index) {
+                  final entry = node.entries[index];
+                  return _OptionCard(
+                    title: entry.title,
+                    asset: entry.iconAsset,
+                    onTap: () {
+                      SplashTabsLauncherService.openForTrigger(
+                        context,
+                        trigger: 'skins_card',
+                      ).whenComplete(() {
+                        if (!context.mounted) return;
+                        if (entry is SkinsEntryNode) {
+                          context.push('/skins/node/${entry.nodeId}');
+                          return;
+                        }
+                        if (entry is SkinsEntryList) {
+                          context.push('/skins/list/${entry.listId}');
+                          return;
+                        }
+                      });
+                    },
+                  );
+                },
               ),
-              itemBuilder: (context, index) {
-                final entry = node.entries[index];
-                return _OptionCard(
-                  title: entry.title,
-                  asset: entry.iconAsset,
-                  onTap: () {
-                    if (entry is SkinsEntryNode) {
-                      context.push('/skins/node/${entry.nodeId}');
-                      return;
-                    }
-                    if (entry is SkinsEntryList) {
-                      context.push('/skins/list/${entry.listId}');
-                      return;
-                    }
-                  },
-                );
-              },
             ),
           ),
         ),
@@ -161,4 +174,3 @@ class _NotFoundScreen extends StatelessWidget {
     );
   }
 }
-

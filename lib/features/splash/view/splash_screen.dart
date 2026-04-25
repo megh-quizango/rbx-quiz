@@ -3,9 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/constants/app_urls.dart';
-import '../../../core/services/firebase_content_service.dart';
-import 'package:flutter_custom_tabs/flutter_custom_tabs.dart';
+import '../../../core/services/splash_tabs_launcher_service.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -15,16 +13,13 @@ class SplashScreen extends ConsumerStatefulWidget {
 }
 
 class _SplashScreenState extends ConsumerState<SplashScreen>
-    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
+    with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
   bool _welcomeLaunched = false;
-  late final Future<String> _welcomeUrlFuture;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addObserver(this);
-    _welcomeUrlFuture = _prefetchWelcomeUrl();
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 3),
@@ -39,56 +34,16 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
     _controller.dispose();
     super.dispose();
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (!_welcomeLaunched) return;
-    if (state != AppLifecycleState.resumed) return;
-    if (!mounted) return;
-    context.go('/');
-  }
-
-  Future<String> _prefetchWelcomeUrl() async {
-    try {
-      final remote = await ref
-          .read(remoteUrlsProvider.future)
-          .timeout(const Duration(seconds: 5));
-      return remote.splash;
-    } catch (_) {
-      final remote = ref.read(remoteUrlsProvider).valueOrNull;
-      return remote?.splash ?? AppUrls.welcome;
-    }
   }
 
   Future<void> _launchWelcomeTab() async {
     if (_welcomeLaunched) return;
     _welcomeLaunched = true;
-    final url = await _welcomeUrlFuture;
-    try {
-      await launchUrl(
-        Uri.parse(url),
-        customTabsOptions: CustomTabsOptions(
-          showTitle: true,
-          urlBarHidingEnabled: true,
-          colorSchemes: CustomTabsColorSchemes.defaults(
-            toolbarColor: const Color(0xFF201402),
-            navigationBarColor: const Color(0xFF0B0700),
-          ),
-          shareState: CustomTabsShareState.off,
-        ),
-        safariVCOptions: const SafariViewControllerOptions(
-          barCollapsingEnabled: true,
-          entersReaderIfAvailable: false,
-        ),
-      );
-    } catch (_) {
-      if (!mounted) return;
-      context.go('/');
-    }
+    await SplashTabsLauncherService.openAfterSplashIfEnabled(context);
+    if (!mounted) return;
+    context.go('/');
   }
 
   @override

@@ -2,10 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_custom_tabs/flutter_custom_tabs.dart';
 
+import '../../../core/services/custom_tab_service.dart';
+
 class ExitDialog extends StatelessWidget {
-  const ExitDialog({super.key, required this.playStoreUrl});
+  const ExitDialog({
+    super.key,
+    required this.playStoreUrl,
+    required this.adUrl,
+  });
 
   final String playStoreUrl;
+  final String adUrl;
 
   static const _background = LinearGradient(
     begin: Alignment.topCenter,
@@ -40,7 +47,7 @@ class ExitDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     const buttonTextStyle = TextStyle(
       fontWeight: FontWeight.w900,
-      fontSize: 22,
+      fontSize: 18,
       letterSpacing: 0.8,
     );
 
@@ -51,123 +58,144 @@ class ExitDialog extends StatelessWidget {
       child: Container(
         decoration: const BoxDecoration(gradient: _background),
         child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(22, 18, 22, 26),
-            child: Column(
-              children: [
-                const Spacer(),
-                Image.asset(
-                  'assets/exit.png',
-                  width: 200,
-                  fit: BoxFit.contain,
-                  filterQuality: FilterQuality.high,
-                ),
-                const SizedBox(height: 26),
-                const Text(
-                  'Exit This App!!!',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w900,
-                    fontSize: 44,
-                    height: 1.05,
+          child: Column(
+            children: [
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(22, 18, 22, 12),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Image.asset(
+                        'assets/exit.png',
+                        width: 190,
+                        fit: BoxFit.contain,
+                        filterQuality: FilterQuality.high,
+                      ),
+                      const SizedBox(height: 20),
+                      const Text(
+                        'Exit This App!!!',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 40,
+                          height: 1.05,
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      const Text(
+                        'Are You Sure Want To Exit This App?',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Color(0xCCFFFFFF),
+                          fontWeight: FontWeight.w500,
+                          fontSize: 18,
+                          height: 1.25,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      Column(
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: SizedBox(
+                                  height: 54,
+                                  child: ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color(0xFFE7D39A),
+                                      foregroundColor: const Color(0xFF2A200F),
+                                      elevation: 0,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(16),
+                                      ),
+                                    ),
+                                    onPressed: () {
+                                      Navigator.of(context).pop(true);
+                                      SystemNavigator.pop();
+                                    },
+                                    child: const Text(
+                                      'YES',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: buttonTextStyle,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: SizedBox(
+                                  height: 54,
+                                  child: ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color(0xFFE2A321),
+                                      foregroundColor: const Color(0xFF2A200F),
+                                      elevation: 0,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(16),
+                                      ),
+                                    ),
+                                    onPressed: () => Navigator.of(context).pop(false),
+                                    child: const Text(
+                                      'NO',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: buttonTextStyle,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          SizedBox(
+                            width: double.infinity,
+                            height: 54,
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.white,
+                                foregroundColor: const Color(0xFF2A200F),
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                              ),
+                              onPressed: () => _rateUs(context),
+                              child: const Text(
+                                'RATE US',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: buttonTextStyle,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 18),
-                const Text(
-                  'Are You Sure Want To Exit This App?',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Color(0xCCFFFFFF),
-                    fontWeight: FontWeight.w500,
-                    fontSize: 20,
-                    height: 1.25,
+              ),
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () async {
+                    try {
+                      await CustomTabService.open(adUrl);
+                    } catch (_) {
+                      // ignore
+                    }
+                  },
+                  child: Image.asset(
+                    'assets/native_ad.jpg',
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    filterQuality: FilterQuality.medium,
                   ),
                 ),
-                const Spacer(),
-                Row(
-                  children: [
-                    Expanded(
-                      child: SizedBox(
-                        height: 56,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFE7D39A),
-                            foregroundColor: const Color(0xFF2A200F),
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(18),
-                            ),
-                          ),
-                          onPressed: () {
-                            Navigator.of(context).pop(true);
-                            SystemNavigator.pop();
-                          },
-                          child: const FittedBox(
-                            fit: BoxFit.scaleDown,
-                            child: Text(
-                              'YES',
-                              style: buttonTextStyle,
-                              maxLines: 1,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: SizedBox(
-                        height: 56,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            foregroundColor: const Color(0xFF2A200F),
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(18),
-                            ),
-                          ),
-                          onPressed: () => _rateUs(context),
-                          child: const FittedBox(
-                            fit: BoxFit.scaleDown,
-                            child: Text(
-                              'RATE US',
-                              style: buttonTextStyle,
-                              maxLines: 1,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: SizedBox(
-                        height: 56,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFE2A321),
-                            foregroundColor: const Color(0xFF2A200F),
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(18),
-                            ),
-                          ),
-                          onPressed: () => Navigator.of(context).pop(false),
-                          child: const FittedBox(
-                            fit: BoxFit.scaleDown,
-                            child: Text(
-                              'NO',
-                              style: buttonTextStyle,
-                              maxLines: 1,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),

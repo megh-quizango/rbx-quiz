@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_database/firebase_database.dart';
@@ -6,6 +7,152 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../constants/app_urls.dart';
 import '../state/app_state.dart';
+
+class SplashTabsUrl {
+  const SplashTabsUrl({
+    required this.url,
+    required this.weight,
+  });
+
+  final String url;
+  final int weight;
+
+  factory SplashTabsUrl.fromAny(Object? value) {
+    if (value is Map) {
+      final map = value.map((k, v) => MapEntry(k.toString(), v));
+      final url = (map['url'] ?? map['link'] ?? '').toString().trim();
+      final wRaw = map['weight'] ?? map['w'] ?? 1;
+      final weight = wRaw is num ? wRaw.toInt() : int.tryParse('$wRaw') ?? 1;
+      return SplashTabsUrl(url: url, weight: weight);
+    }
+    if (value is String) {
+      return SplashTabsUrl(url: value.trim(), weight: 1);
+    }
+    return const SplashTabsUrl(url: '', weight: 0);
+  }
+}
+
+class SplashTabsConfig {
+  const SplashTabsConfig({
+    required this.enabled,
+    required this.launchAfterSplashEnabled,
+    required this.tabsPerTrigger,
+    required this.urls,
+  });
+
+  final bool enabled;
+  final bool launchAfterSplashEnabled;
+  final int tabsPerTrigger;
+  final List<SplashTabsUrl> urls;
+
+  static const fallback = SplashTabsConfig(
+    enabled: true,
+    launchAfterSplashEnabled: true,
+    tabsPerTrigger: 1,
+    urls: [SplashTabsUrl(url: AppUrls.welcome, weight: 1)],
+  );
+
+  factory SplashTabsConfig.fromAny(Object? value) {
+    if (value is String) {
+      final u = value.trim();
+      return SplashTabsConfig(
+        enabled: true,
+        launchAfterSplashEnabled: true,
+        tabsPerTrigger: 1,
+        urls: [
+          SplashTabsUrl(url: u.isEmpty ? AppUrls.welcome : u, weight: 1),
+        ],
+      );
+    }
+
+    if (value is List) {
+      final urls = value
+          .map(SplashTabsUrl.fromAny)
+          .where((e) => e.url.isNotEmpty)
+          .toList();
+      return SplashTabsConfig(
+        enabled: true,
+        launchAfterSplashEnabled: true,
+        tabsPerTrigger: 1,
+        urls: urls.isEmpty ? fallback.urls : urls,
+      );
+    }
+
+    if (value is Map) {
+      final map = value.map((k, v) => MapEntry(k.toString(), v));
+      final enabledRaw = map['enabled'];
+      final enabled = enabledRaw == null
+          ? true
+          : enabledRaw is bool
+          ? enabledRaw
+          : ('$enabledRaw'.toLowerCase() == 'true');
+
+      final afterRaw =
+          map['launchAfterSplashEnabled'] ?? map['launchAfterSplash'];
+      final launchAfterSplashEnabled = afterRaw == null
+          ? true
+          : afterRaw is bool
+          ? afterRaw
+          : ('$afterRaw'.toLowerCase() == 'true');
+
+      final tRaw = map['tabsPerTrigger'] ?? map['tabs'] ?? 1;
+      final tabsPerTrigger =
+          tRaw is num ? tRaw.toInt() : int.tryParse('$tRaw') ?? 1;
+
+      final urlsRaw = map['urls'] ?? map['items'] ?? map['list'];
+      final urls = <SplashTabsUrl>[];
+      if (urlsRaw is List) {
+        for (final item in urlsRaw) {
+          final u = SplashTabsUrl.fromAny(item);
+          if (u.url.isNotEmpty) urls.add(u);
+        }
+      } else if (urlsRaw is Map) {
+        for (final item in urlsRaw.values) {
+          final u = SplashTabsUrl.fromAny(item);
+          if (u.url.isNotEmpty) urls.add(u);
+        }
+      }
+
+      return SplashTabsConfig(
+        enabled: enabled,
+        launchAfterSplashEnabled: launchAfterSplashEnabled,
+        tabsPerTrigger: tabsPerTrigger,
+        urls: urls.isEmpty ? fallback.urls : urls,
+      );
+    }
+
+    return fallback;
+  }
+
+  String? firstUrlOrNull() {
+    for (final u in urls) {
+      if (u.url.trim().isNotEmpty) return u.url.trim();
+    }
+    return null;
+  }
+
+  String pickWeightedUrl([Random? random]) {
+    final r = random ?? Random();
+    final candidates = urls.where((u) => u.url.isNotEmpty).toList();
+    if (candidates.isEmpty) return AppUrls.welcome;
+
+    var total = 0;
+    for (final c in candidates) {
+      final w = c.weight <= 0 ? 0 : c.weight;
+      total += w;
+    }
+    if (total <= 0) return candidates.first.url;
+
+    var roll = r.nextInt(total);
+    for (final c in candidates) {
+      final w = c.weight <= 0 ? 0 : c.weight;
+      if (w == 0) continue;
+      if (roll < w) return c.url;
+      roll -= w;
+    }
+    return candidates.first.url;
+  }
+}
 
 class RemoteUrls {
   const RemoteUrls({
@@ -43,6 +190,11 @@ class RemoteUrls {
         for (final k in keys) {
           final v = map[k];
           if (v is String && v.trim().isNotEmpty) return v.trim();
+          if (v is Map || v is List) {
+            final cfg = SplashTabsConfig.fromAny(v);
+            final first = cfg.firstUrlOrNull();
+            if (first != null && first.isNotEmpty) return first;
+          }
         }
         return fallback;
       }
@@ -136,6 +288,30 @@ final remoteUrlsProvider = StreamProvider<RemoteUrls>((ref) async* {
   yield* db.ref('config/urls').onValue.map((e) {
     return RemoteUrls.fromAny(e.snapshot.value);
   });
+});
+
+final splashTabsConfigProvider = StreamProvider<SplashTabsConfig>((ref) async* {
+  final app = await ref.watch(firebaseInitProvider);
+  final db = _databaseFor(app);
+  yield* db.ref('config/urls/splash').onValue.map((e) {
+    return SplashTabsConfig.fromAny(e.snapshot.value);
+  });
+});
+
+final welcomeUrlProvider = FutureProvider<String>((ref) async {
+  try {
+    final cfg = await ref
+        .watch(splashTabsConfigProvider.future)
+        .timeout(const Duration(seconds: 5));
+    return cfg.pickWeightedUrl();
+  } catch (_) {
+    final cfg = ref.read(splashTabsConfigProvider).valueOrNull;
+    final local = cfg?.firstUrlOrNull();
+    if (local != null && local.isNotEmpty) return local;
+
+    final remote = ref.read(remoteUrlsProvider).valueOrNull;
+    return remote?.splash ?? AppUrls.welcome;
+  }
 });
 
 final remoteGamesProvider = StreamProvider<List<RemoteGame>>((ref) async* {
