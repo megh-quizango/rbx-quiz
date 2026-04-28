@@ -9,10 +9,7 @@ import '../constants/app_urls.dart';
 import '../state/app_state.dart';
 
 class SplashTabsUrl {
-  const SplashTabsUrl({
-    required this.url,
-    required this.weight,
-  });
+  const SplashTabsUrl({required this.url, required this.weight});
 
   final String url;
   final int weight;
@@ -59,9 +56,7 @@ class SplashTabsConfig {
         enabled: true,
         launchAfterSplashEnabled: true,
         tabsPerTrigger: 1,
-        urls: [
-          SplashTabsUrl(url: u.isEmpty ? AppUrls.welcome : u, weight: 1),
-        ],
+        urls: [SplashTabsUrl(url: u.isEmpty ? AppUrls.welcome : u, weight: 1)],
       );
     }
 
@@ -96,8 +91,9 @@ class SplashTabsConfig {
           : ('$afterRaw'.toLowerCase() == 'true');
 
       final tRaw = map['tabsPerTrigger'] ?? map['tabs'] ?? 1;
-      final tabsPerTrigger =
-          tRaw is num ? tRaw.toInt() : int.tryParse('$tRaw') ?? 1;
+      final tabsPerTrigger = tRaw is num
+          ? tRaw.toInt()
+          : int.tryParse('$tRaw') ?? 1;
 
       final urlsRaw = map['urls'] ?? map['items'] ?? map['list'];
       final urls = <SplashTabsUrl>[];

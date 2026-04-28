@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../core/widgets/overlay_shimmer.dart';
+
 class StayAndEarnScreen extends StatefulWidget {
   const StayAndEarnScreen({
     super.key,
@@ -197,24 +199,43 @@ class _StayAndEarnScreenState extends State<StayAndEarnScreen>
                               SizedBox(
                                 width: double.infinity,
                                 height: (58 * scale).clamp(52, 70).toDouble(),
-                                child: ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFFE7D39A),
-                                    foregroundColor: const Color(0xFF2A200F),
-                                    elevation: 0,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(14),
+                                child: Stack(
+                                  children: [
+                                    /// 🔥 BUTTON
+                                    SizedBox.expand(
+                                      child: ElevatedButton(
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: const Color(0xFFE0AA14),
+                                          foregroundColor: const Color(0xFF2A200F),
+                                          elevation: 0,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(14),
+                                          ),
+                                        ),
+                                        onPressed: _stayAndEarn,
+                                        child: Text(
+                                          'STAY & EARN',
+                                          style: TextStyle(
+                                            fontSize: 20 * scale,
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.w900,
+                                            letterSpacing: 1.0,
+                                          ),
+                                        ),
+                                      ),
                                     ),
-                                  ),
-                                  onPressed: _stayAndEarn,
-                                  child: Text(
-                                    'STAY & EARN',
-                                    style: TextStyle(
-                                      fontSize: 20 * scale,
-                                      fontWeight: FontWeight.w900,
-                                      letterSpacing: 1.0,
+
+                                    /// 🔥 SHIMMER OVERLAY
+                                    Positioned.fill(
+                                      child: IgnorePointer(
+                                        child: OverlayShimmer(
+                                          borderRadius: BorderRadius.circular(14),
+                                          opacity: 0.5,
+                                          child: const SizedBox(), // required
+                                        ),
+                                      ),
                                     ),
-                                  ),
+                                  ],
                                 ),
                               ),
                               Container(

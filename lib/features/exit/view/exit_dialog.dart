@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_custom_tabs/flutter_custom_tabs.dart';
 
 import '../../../core/services/custom_tab_service.dart';
+import '../../../core/widgets/overlay_shimmer.dart';
 
 class ExitDialog extends StatelessWidget {
   const ExitDialog({
@@ -102,72 +103,114 @@ class ExitDialog extends StatelessWidget {
                               Expanded(
                                 child: SizedBox(
                                   height: 54,
-                                  child: ElevatedButton(
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: const Color(0xFFE7D39A),
-                                      foregroundColor: const Color(0xFF2A200F),
-                                      elevation: 0,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(16),
+                                  child: Stack(
+                                    children: [
+                                      /// BUTTON
+                                      SizedBox.expand(
+                                        child: ElevatedButton(
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: const Color(0xFFE7D39A),
+                                            foregroundColor: const Color(0xFF2A200F),
+                                            elevation: 0,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(16),
+                                            ),
+                                          ),
+                                          onPressed: () {
+                                            Navigator.of(context).pop(true);
+                                            SystemNavigator.pop();
+                                          },
+                                          child: const Text(
+                                            'YES',
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: buttonTextStyle,
+                                          ),
+                                        ),
                                       ),
-                                    ),
-                                    onPressed: () {
-                                      Navigator.of(context).pop(true);
-                                      SystemNavigator.pop();
-                                    },
-                                    child: const Text(
-                                      'YES',
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: buttonTextStyle,
-                                    ),
+
+                                      /// SHIMMER
+                                      Positioned.fill(
+                                        child: IgnorePointer(
+                                          child: OverlayShimmer(
+                                            borderRadius: BorderRadius.circular(16),
+                                            opacity: 0.5,
+                                            child: const SizedBox(),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ),
+
                               const SizedBox(width: 12),
+
                               Expanded(
                                 child: SizedBox(
                                   height: 54,
-                                  child: ElevatedButton(
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: const Color(0xFFE2A321),
-                                      foregroundColor: const Color(0xFF2A200F),
-                                      elevation: 0,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(16),
+                                  child: Stack(
+                                    children: [
+                                      /// BUTTON
+                                      SizedBox.expand(
+                                        child: ElevatedButton(
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: const Color(0xFFE2A321),
+                                            foregroundColor: const Color(0xFF2A200F),
+                                            elevation: 0,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(16),
+                                            ),
+                                          ),
+                                          onPressed: () =>
+                                              Navigator.of(context).pop(false),
+                                          child: const Text(
+                                            'NO',
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: buttonTextStyle,
+                                          ),
+                                        ),
                                       ),
-                                    ),
-                                    onPressed: () => Navigator.of(context).pop(false),
-                                    child: const Text(
-                                      'NO',
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: buttonTextStyle,
-                                    ),
+
+                                      /// SHIMMER
+                                      Positioned.fill(
+                                        child: IgnorePointer(
+                                          child: OverlayShimmer(
+                                            borderRadius: BorderRadius.circular(16),
+                                            opacity: 0.5,
+                                            child: const SizedBox(),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ),
                             ],
                           ),
                           const SizedBox(height: 12),
-                          SizedBox(
-                            width: double.infinity,
-                            height: 54,
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.white,
-                                foregroundColor: const Color(0xFF2A200F),
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
+                          OverlayShimmer(
+                            borderRadius: BorderRadius.circular(16),
+                            child: SizedBox(
+                              width: double.infinity,
+                              height: 54,
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.white,
+                                  foregroundColor: const Color(0xFF2A200F),
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
                                 ),
-                              ),
-                              onPressed: () => _rateUs(context),
-                              child: const Text(
-                                'RATE US',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: buttonTextStyle,
+                                onPressed: () => _rateUs(context),
+                                child: const Text(
+                                  'RATE US',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: buttonTextStyle,
+                                ),
                               ),
                             ),
                           ),

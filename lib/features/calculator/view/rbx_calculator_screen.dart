@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
@@ -11,7 +12,7 @@ class RbxCalculatorScreen extends StatelessWidget {
   static const _background = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
-    colors: [Color(0xFF3A2A07), Color(0xFF0B0700)],
+    colors: [Color(0xFFF6EFE2), Color(0xFFF6EFE2)],
   );
 
   @override
@@ -20,12 +21,15 @@ class RbxCalculatorScreen extends StatelessWidget {
     final gridRatio = screenHeight < 650
         ? 0.68
         : screenHeight < 760
-            ? 0.74
-            : 0.80;
+        ? 0.74
+        : 0.80;
 
     return WillPopScope(
       onWillPop: () async {
-        await SplashTabsLauncherService.openForTrigger(context, trigger: 'back');
+        await SplashTabsLauncherService.openForTrigger(
+          context,
+          trigger: 'back',
+        );
         return true;
       },
       child: AnnotatedRegion<SystemUiOverlayStyle>(
@@ -101,8 +105,7 @@ class _CalculatorCard extends StatelessWidget {
         final h = constraints.maxHeight;
 
         final padding = h < 180 ? 14.0 : 18.0;
-        final iconDiameter =
-            ((w * 0.34).clamp(44.0, 56.0) as double);
+        final iconDiameter = ((w * 0.34).clamp(44.0, 56.0) as double);
         final iconSize = ((iconDiameter * 0.46).clamp(20.0, 26.0) as double);
         final titleFont = ((h * 0.14).clamp(16.0, 21.0) as double);
         final subtitleFont = ((h * 0.085).clamp(11.5, 13.5) as double);
@@ -116,7 +119,7 @@ class _CalculatorCard extends StatelessWidget {
             onTap: onTap,
             child: Ink(
               decoration: BoxDecoration(
-                color: const Color(0xFF1E1A12),
+                color: const Color(0xFF241802),
                 borderRadius: BorderRadius.circular(26),
                 border: Border.all(color: const Color(0x22FFFFFF)),
               ),
@@ -131,12 +134,12 @@ class _CalculatorCard extends StatelessWidget {
                           width: iconDiameter,
                           height: iconDiameter,
                           decoration: const BoxDecoration(
-                            color: Color(0xFF0D0C0A),
+                            color: Color(0xFFF6EFE2),
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
                             option.icon,
-                            color: Colors.white,
+                            color: Color(0xFF241802),
                             size: iconSize,
                           ),
                         ),

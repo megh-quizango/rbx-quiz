@@ -35,8 +35,10 @@ class NativeCustomTabEvent {
         );
       }
     }
-    if (value == 'shown') return const NativeCustomTabEvent(NativeCustomTabEventType.shown);
-    if (value == 'hidden') return const NativeCustomTabEvent(NativeCustomTabEventType.hidden);
+    if (value == 'shown')
+      return const NativeCustomTabEvent(NativeCustomTabEventType.shown);
+    if (value == 'hidden')
+      return const NativeCustomTabEvent(NativeCustomTabEventType.hidden);
     return null;
   }
 }
@@ -47,11 +49,14 @@ class NativeCustomTabs {
   static final NativeCustomTabs instance = NativeCustomTabs._();
 
   static const MethodChannel _channel = MethodChannel('rbx_quiz/custom_tabs');
-  static const EventChannel _eventsChannel = EventChannel('rbx_quiz/custom_tabs_events');
+  static const EventChannel _eventsChannel = EventChannel(
+    'rbx_quiz/custom_tabs_events',
+  );
 
   Stream<NativeCustomTabEvent>? _events;
 
-  bool get isSupported => !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
+  bool get isSupported =>
+      !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
 
   Stream<NativeCustomTabEvent> events() {
     if (!isSupported) return const Stream.empty();

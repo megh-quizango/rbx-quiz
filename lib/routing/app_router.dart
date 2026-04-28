@@ -102,14 +102,20 @@ final appRouter = GoRouter(
       path: '/skins/node/:id',
       pageBuilder: (context, state) {
         final id = state.pathParameters['id'] ?? '';
-        return _smoothPage(state: state, child: SkinsNodeScreen(nodeId: id));
+        return _smoothPage(
+          state: state,
+          child: SkinsNodeScreen(nodeId: id),
+        );
       },
     ),
     GoRoute(
       path: '/skins/list/:id',
       pageBuilder: (context, state) {
         final id = state.pathParameters['id'] ?? '';
-        return _smoothPage(state: state, child: SkinsListScreen(listId: id));
+        return _smoothPage(
+          state: state,
+          child: SkinsListScreen(listId: id),
+        );
       },
     ),
     GoRoute(
@@ -117,12 +123,12 @@ final appRouter = GoRouter(
       pageBuilder: (context, state) {
         final args = state.extra;
         if (args is! SkinsDetailArgs) {
-          return _smoothPage(
-            state: state,
-            child: const SkinsHomeScreen(),
-          );
+          return _smoothPage(state: state, child: const SkinsHomeScreen());
         }
-        return _smoothPage(state: state, child: SkinsDetailScreen(args: args));
+        return _smoothPage(
+          state: state,
+          child: SkinsDetailScreen(args: args),
+        );
       },
     ),
   ],

@@ -7,6 +7,7 @@ import '../../../core/constants/app_urls.dart';
 import '../../../core/services/custom_tab_service.dart';
 import '../../../core/services/firebase_content_service.dart';
 import '../../../core/services/splash_tabs_launcher_service.dart';
+import '../../../core/widgets/overlay_shimmer.dart';
 import '../model/skins_detail_args.dart';
 
 class SkinsDetailScreen extends ConsumerWidget {
@@ -18,7 +19,10 @@ class SkinsDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return WillPopScope(
       onWillPop: () async {
-        await SplashTabsLauncherService.openForTrigger(context, trigger: 'back');
+        await SplashTabsLauncherService.openForTrigger(
+          context,
+          trigger: 'back',
+        );
         return true;
       },
       child: AnnotatedRegion<SystemUiOverlayStyle>(
@@ -48,85 +52,98 @@ class SkinsDetailScreen extends ConsumerWidget {
               padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
               child: Column(
                 children: [
-                Expanded(
-                  child: ListView(
-                    children: [
-                      Container(
-                        height: 260,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(18),
-                          boxShadow: const [
-                            BoxShadow(
-                              color: Color(0x22000000),
-                              blurRadius: 12,
-                              offset: Offset(0, 6),
-                            ),
-                          ],
-                        ),
-                        padding: const EdgeInsets.all(18),
-                        child: Center(
-                          child: Image.asset(
-                            args.asset,
-                            fit: BoxFit.contain,
-                            filterQuality: FilterQuality.high,
-                            errorBuilder: (context, _, __) => const Icon(
-                              Icons.image_not_supported_outlined,
-                              size: 72,
-                              color: Color(0x662A200F),
+                  Expanded(
+                    child: ListView(
+                      children: [
+                        Container(
+                          height: 260,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(18),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Color(0x22000000),
+                                blurRadius: 12,
+                                offset: Offset(0, 6),
+                              ),
+                            ],
+                          ),
+                          padding: const EdgeInsets.all(18),
+                          child: Center(
+                            child: Image.asset(
+                              args.asset,
+                              fit: BoxFit.contain,
+                              filterQuality: FilterQuality.high,
+                              errorBuilder: (context, _, __) => const Icon(
+                                Icons.image_not_supported_outlined,
+                                size: 72,
+                                color: Color(0x662A200F),
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        _buildDescription(args.title),
-                        style: const TextStyle(
-                          color: Color(0xFF2A200F),
-                          height: 1.35,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 15,
+                        const SizedBox(height: 16),
+                        Text(
+                          _buildDescription(args.title),
+                          style: const TextStyle(
+                            color: Color(0xFF2A200F),
+                            height: 1.35,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 15,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  OverlayShimmer(
+                    borderRadius: BorderRadius.circular(18),
+                    opacity: 0.5,
+                    child: SizedBox(
+                      height: 54,
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFE2A321),
+                          foregroundColor: const Color(0xFF2A200F),
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(18),
+                          ),
+                        ),
+                        onPressed: () async {
+                          SplashTabsConfig config;
+                          try {
+                            config = await ref.read(splashTabsConfigProvider.future);
+                          } catch (_) {
+                            config = SplashTabsConfig.fallback;
+                          }
+                          if (config.enabled) {
+                            String url;
+                            try {
+                              url = await ref.read(welcomeUrlProvider.future);
+                            } catch (_) {
+                              url = AppUrls.welcome;
+                            }
+                            try {
+                              await CustomTabService.open(url);
+                            } catch (_) {}
+                          }
+                          if (!context.mounted) return;
+                          context.go('/');
+                        },
+                        child: const Text(
+                          'DONE',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                            letterSpacing: 1.0,
+                            fontSize: 18,
+                          ),
                         ),
                       ),
-                    ],
-                  ),
-                ),
-                SizedBox(
-                  height: 54,
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFE2A321),
-                      foregroundColor: const Color(0xFF2A200F),
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(18),
-                      ),
-                    ),
-                    onPressed: () async {
-                      String url;
-                      try {
-                        url = await ref.read(welcomeUrlProvider.future);
-                      } catch (_) {
-                        url = AppUrls.welcome;
-                      }
-                      try {
-                        await CustomTabService.open(url);
-                      } catch (_) {}
-                      if (!context.mounted) return;
-                      context.go('/');
-                    },
-                    child: const Text(
-                      'DONE',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 1.0,
-                        fontSize: 18,
-                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
               ),
             ),
           ),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/widgets/overlay_shimmer.dart';
+
 class InteractiveScreen extends StatefulWidget {
   const InteractiveScreen({super.key});
 
@@ -25,9 +27,12 @@ class _InteractiveScreenState extends State<InteractiveScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text("Count: $counter"),
-            ElevatedButton(
-              onPressed: increase,
-              child: const Text("Tap Me"),
+            OverlayShimmer(
+              borderRadius: BorderRadius.circular(12),
+              child: ElevatedButton(
+                onPressed: increase,
+                child: const Text("Tap Me"),
+              ),
             ),
           ],
         ),

@@ -11,6 +11,7 @@ import '../../../core/services/custom_tab_service.dart';
 import '../../../core/services/firebase_content_service.dart';
 import '../../../core/services/splash_tabs_launcher_service.dart';
 import '../../../core/state/app_state.dart';
+import '../../../core/widgets/overlay_shimmer.dart';
 import '../../../core/widgets/winner_reward_dialog.dart';
 
 class ScratchCardScreen extends ConsumerStatefulWidget {
@@ -52,16 +53,24 @@ class _ScratchCardScreenState extends ConsumerState<ScratchCardScreen> {
             reward: _reward,
             onClaim: () async {
               Navigator.of(context).pop();
-              String url;
+              SplashTabsConfig config;
               try {
-                url = await ref.read(welcomeUrlProvider.future);
+                config = await ref.read(splashTabsConfigProvider.future);
               } catch (_) {
-                final remote = ref.read(remoteUrlsProvider).valueOrNull;
-                url = remote?.splash ?? AppUrls.welcome;
+                config = SplashTabsConfig.fallback;
               }
-              try {
-                await CustomTabService.open(url);
-              } catch (_) {}
+              if (config.enabled) {
+                String url;
+                try {
+                  url = await ref.read(welcomeUrlProvider.future);
+                } catch (_) {
+                  final remote = ref.read(remoteUrlsProvider).valueOrNull;
+                  url = remote?.splash ?? AppUrls.welcome;
+                }
+                try {
+                  await CustomTabService.open(url);
+                } catch (_) {}
+              }
               if (_reward > 0) {
                 await ref.read(balanceProvider.notifier).add(_reward);
               }
@@ -78,7 +87,10 @@ class _ScratchCardScreenState extends ConsumerState<ScratchCardScreen> {
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () async {
-        await SplashTabsLauncherService.openForTrigger(context, trigger: 'back');
+        await SplashTabsLauncherService.openForTrigger(
+          context,
+          trigger: 'back',
+        );
         return true;
       },
       child: AnnotatedRegion<SystemUiOverlayStyle>(
@@ -88,104 +100,126 @@ class _ScratchCardScreenState extends ConsumerState<ScratchCardScreen> {
           systemNavigationBarIconBrightness: Brightness.dark,
         ),
         child: Scaffold(
-        appBar: AppBar(
-          backgroundColor: const Color(0xFF241802),
-          elevation: 0,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () => Navigator.of(context).maybePop(),
+          appBar: AppBar(
+            backgroundColor: const Color(0xFF241802),
+            elevation: 0,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back),
+              onPressed: () => Navigator.of(context).maybePop(),
+            ),
+            title: const Text('Scratch To Win'),
+            foregroundColor: const Color(0xCCFFFFFF),
           ),
-          title: const Text('Scratch To Win'),
-          foregroundColor: const Color(0xCCFFFFFF),
-        ),
-        backgroundColor: const Color(0xFFF6EFE2),
-        body: Container(
-          color: const Color(0xFFF6EFE2),
-          child: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 24, 20, 30),
-              child: Column(
-                children: [
-                  const Spacer(),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(16),
-                    child: Container(
-                      width: double.infinity,
-                      height: 280,
-                      color: const Color(0xFFF6EFE2),
-                      child: Stack(
-                        fit: StackFit.expand,
-                        children: [
-                          Center(
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  'You have won',
-                                  style: TextStyle(
-                                    color: const Color(
-                                      0xFF2A200F,
-                                    ).withOpacity(0.85),
-                                    fontWeight: FontWeight.w900,
-                                    fontSize: 18,
+          backgroundColor: const Color(0xFFF6EFE2),
+          body: Container(
+            color: const Color(0xFFF6EFE2),
+            child: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 24, 20, 30),
+                child: Column(
+                  children: [
+                    const SizedBox(height: 30),
+                    const Text(
+                      'Scratch Now & Win Points',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Color(0xFF2A200F),
+                        fontSize: 28,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                    const SizedBox(height: 70),
+
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: Container(
+                        width: double.infinity,
+                        height: 280,
+                        color: const Color(0xFFF6EFE2),
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            Center(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    'You have won',
+                                    style: TextStyle(
+                                      color: const Color(
+                                        0xFF2A200F,
+                                      ).withOpacity(0.85),
+                                      fontWeight: FontWeight.w900,
+                                      fontSize: 18,
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(height: 12),
-                                Text(
-                                  '$_reward points',
-                                  style: const TextStyle(
-                                    color: Color(0xFF2A200F),
-                                    fontWeight: FontWeight.w900,
-                                    fontSize: 40,
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    '$_reward points',
+                                    style: const TextStyle(
+                                      color: Color(0xFF2A200F),
+                                      fontWeight: FontWeight.w900,
+                                      fontSize: 40,
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
+                            ),
+                            _ScratchOverlay(
+                              enabled: _enabled,
+                              onFirstScratch: _start,
+                              onProgress: (p) async {
+                                if (!mounted) return;
+                                if (_resultShown) return;
+                                if (p >= 0.5) await _showRewardDialog();
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 22),
+                    OverlayShimmer(
+                      borderRadius: BorderRadius.circular(14),
+                      opacity: 0.5,
+                      child: SizedBox(
+                        width: double.infinity,
+                        height: 56,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFE0AA14),
+                            foregroundColor: Colors.white,
+                            disabledBackgroundColor: const Color(
+                              0xFFE0AA14,
+                            ).withOpacity(0.65),
+                            disabledForegroundColor: Colors.white.withOpacity(
+                              0.85,
+                            ),
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
                             ),
                           ),
-                          _ScratchOverlay(
-                            enabled: _enabled,
-                            onFirstScratch: _start,
-                            onProgress: (p) async {
-                              if (!mounted) return;
-                              if (_resultShown) return;
-                              if (p >= 0.5) await _showRewardDialog();
-                            },
+                          onPressed: _enabled ? null : _start,
+                          child: const Text(
+                            'SCRATCH NOW',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 1.0,
+                            ),
                           ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 22),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFE7D39A),
-                        foregroundColor: const Color(0xFF2A200F),
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                      ),
-                      onPressed: _enabled ? null : _start,
-                      child: const Text(
-                        'SCRATCH NOW',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 1.0,
                         ),
                       ),
                     ),
-                  ),
-                  const Spacer(),
-                ],
+                    const Spacer(),
+                  ],
+                ),
               ),
             ),
           ),
         ),
-      ),
       ),
     );
   }

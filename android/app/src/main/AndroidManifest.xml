@@ -1,6 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application
-        android:label="rbx quiz"
+        android:label="Robux Rewards Get Easy RBX"
         android:name="${applicationName}"
         android:enableOnBackInvokedCallback="true"
 

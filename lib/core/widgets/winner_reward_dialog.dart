@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'overlay_shimmer.dart';
+
 class WinnerRewardDialog extends StatelessWidget {
   const WinnerRewardDialog({
     super.key,
@@ -27,7 +29,7 @@ class WinnerRewardDialog extends StatelessWidget {
             children: [
               Image.asset(
                 'assets/winner.png',
-                width: 140,
+                width: 110,
                 fit: BoxFit.contain,
                 filterQuality: FilterQuality.high,
               ),
@@ -53,26 +55,29 @@ class WinnerRewardDialog extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 18),
-              SizedBox(
-                width: 220,
-                height: 54,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFE2A321),
-                    foregroundColor: const Color(0xFF2A200F),
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
+              OverlayShimmer(
+                borderRadius: BorderRadius.circular(14),
+                child: SizedBox(
+                  width: 220,
+                  height: 54,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFE2A321),
+                      foregroundColor: const Color(0xFF2A200F),
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
                     ),
-                  ),
-                  onPressed: onClaim,
-                  child: const Text(
-                    'CLAIM NOW',
-                    maxLines: 1,
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 22,
-                      letterSpacing: 1.0,
+                    onPressed: onClaim,
+                    child: const Text(
+                      'CLAIM NOW',
+                      maxLines: 1,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 22,
+                        letterSpacing: 1.0,
+                      ),
                     ),
                   ),
                 ),
@@ -84,4 +89,3 @@ class WinnerRewardDialog extends StatelessWidget {
     );
   }
 }
-

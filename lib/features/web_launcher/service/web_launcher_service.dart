@@ -5,9 +5,7 @@ class WebLauncherService {
     try {
       await launchUrl(
         Uri.parse(url),
-        customTabsOptions: const CustomTabsOptions(
-          showTitle: true,
-        ),
+        customTabsOptions: const CustomTabsOptions(showTitle: true),
         safariVCOptions: const SafariViewControllerOptions(
           entersReaderIfAvailable: false,
         ),

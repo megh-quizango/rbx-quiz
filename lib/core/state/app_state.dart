@@ -57,10 +57,9 @@ class SpinRewardGateNotifier extends Notifier<DateTime?> {
   }
 }
 
-final dailyRbxClaimProvider =
-    NotifierProvider<DailyRbxClaimNotifier, String?>(
-      DailyRbxClaimNotifier.new,
-    );
+final dailyRbxClaimProvider = NotifierProvider<DailyRbxClaimNotifier, String?>(
+  DailyRbxClaimNotifier.new,
+);
 
 class DailyRbxClaimNotifier extends Notifier<String?> {
   static const _key = 'daily_rbx_last_claim_ymd';

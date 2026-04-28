@@ -19,7 +19,10 @@ class SkinsNodeScreen extends StatelessWidget {
 
     return WillPopScope(
       onWillPop: () async {
-        await SplashTabsLauncherService.openForTrigger(context, trigger: 'back');
+        await SplashTabsLauncherService.openForTrigger(
+          context,
+          trigger: 'back',
+        );
         return true;
       },
       child: AnnotatedRegion<SystemUiOverlayStyle>(

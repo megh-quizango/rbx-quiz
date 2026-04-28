@@ -124,31 +124,60 @@ class _CenterMark extends StatelessWidget {
         final outerSize = shortestSide * 0.64;
         final innerSize = outerSize * 0.62;
 
-        return SizedBox(
-          width: outerSize,
-          height: outerSize,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              Opacity(
-                opacity: 0.38,
-                child: Image.asset(
-                  'assets/splash_center.png',
-                  width: outerSize,
-                  height: outerSize,
-                  fit: BoxFit.contain,
-                  filterQuality: FilterQuality.high,
-                ),
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              width: outerSize,
+              height: outerSize,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Opacity(
+                    opacity: 0.38,
+                    child: Image.asset(
+                      'assets/splash_center.png',
+                      width: outerSize,
+                      height: outerSize,
+                    ),
+                  ),
+                  Image.asset(
+                    'assets/splash_logo.png',
+                    width: innerSize,
+                    height: innerSize,
+                  ),
+                ],
               ),
-              Image.asset(
-                'assets/splash_logo.png',
-                width: innerSize,
-                height: innerSize,
-                fit: BoxFit.contain,
-                filterQuality: FilterQuality.high,
+            ),
+
+            const SizedBox(height: 24),
+
+            /// 🔥 MAIN TITLE
+            const Text(
+              'ROBUX REWARDS',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Color(0xFFE2A321), // gold
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.2,
               ),
-            ],
-          ),
+            ),
+
+            const SizedBox(height: 10),
+
+            /// 🔥 SUB TITLE
+            const Text(
+              'GET EASY RBX',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 24,
+                fontWeight: FontWeight.w500,
+                letterSpacing: 1.0,
+              ),
+            ),
+          ],
         );
       },
     );

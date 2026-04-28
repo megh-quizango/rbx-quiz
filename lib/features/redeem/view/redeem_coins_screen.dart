@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/state/app_state.dart';
 import '../../../core/services/splash_tabs_launcher_service.dart';
+import '../../../core/widgets/overlay_shimmer.dart';
 
 class RedeemCoinsScreen extends ConsumerStatefulWidget {
   const RedeemCoinsScreen({super.key});
@@ -73,7 +74,10 @@ class _RedeemCoinsScreenState extends ConsumerState<RedeemCoinsScreen> {
 
     return WillPopScope(
       onWillPop: () async {
-        await SplashTabsLauncherService.openForTrigger(context, trigger: 'back');
+        await SplashTabsLauncherService.openForTrigger(
+          context,
+          trigger: 'back',
+        );
         return true;
       },
       child: AnnotatedRegion<SystemUiOverlayStyle>(
@@ -97,115 +101,120 @@ class _RedeemCoinsScreenState extends ConsumerState<RedeemCoinsScreen> {
           extendBodyBehindAppBar: true,
           body: Column(
             children: [
-            _RedeemHeader(balance: balance),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: EdgeInsets.fromLTRB(
-                  0,
-                  0,
-                  0,
-                  22 + bottomPadding + bottomInset,
-                ),
-                child: Column(
-                  children: [
-                    const SizedBox(height: 22),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 26),
-                      child: Text(
-                        'How many coins you want to\nturn into RBX?',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Color(0xFF2A200F),
-                          fontSize: 18,
-                          height: 1.25,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      'It is ${_usdText(coins)}USD',
-                      style: const TextStyle(
-                        color: Color(0x992A200F),
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 18),
-                    SizedBox(
-                      width: 220,
-                      child: TextSelectionTheme(
-                        data: const TextSelectionThemeData(
-                          cursorColor: Color(0xFF2A200F),
-                          selectionColor: Color(0x33E2A321),
-                          selectionHandleColor: Color(0xFFE2A321),
-                        ),
-                        child: TextField(
-                          controller: _coinsController,
-                          keyboardType: TextInputType.number,
+              _RedeemHeader(balance: balance),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.fromLTRB(
+                    0,
+                    0,
+                    0,
+                    22 + bottomPadding + bottomInset,
+                  ),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 22),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 26),
+                        child: Text(
+                          'How many coins you want to\nturn into RBX?',
                           textAlign: TextAlign.center,
-                          maxLines: 1,
-                          textInputAction: TextInputAction.done,
-                          cursorColor: const Color(0xFF2A200F),
                           style: TextStyle(
-                            fontSize: fontSize,
-                            fontWeight: FontWeight.w900,
-                            color: const Color(0xFF2A200F),
+                            color: Color(0xFF2A200F),
+                            fontSize: 18,
+                            height: 1.25,
+                            fontWeight: FontWeight.w800,
                           ),
-                          decoration: const InputDecoration(
-                            border: InputBorder.none,
-                            isDense: true,
-                          ),
-                          inputFormatters: [
-                            FilteringTextInputFormatter.digitsOnly,
-                            LengthLimitingTextInputFormatter(10),
-                          ],
-                          onChanged: (_) => setState(() {}),
-                          onSubmitted: (_) => _next(balance),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 6),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: SizedBox(
-                        width: double.infinity,
-                        height: 54,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFE7D39A),
-                            foregroundColor: const Color(0xFF2A200F),
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
-                            ),
+                      const SizedBox(height: 10),
+                      Text(
+                        'It is ${_usdText(coins)}USD',
+                        style: const TextStyle(
+                          color: Color(0x992A200F),
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 18),
+                      SizedBox(
+                        width: 220,
+                        child: TextSelectionTheme(
+                          data: const TextSelectionThemeData(
+                            cursorColor: Color(0xFF2A200F),
+                            selectionColor: Color(0x33E2A321),
+                            selectionHandleColor: Color(0xFFE2A321),
                           ),
-                          onPressed: () => _next(balance),
-                          child: const Text(
-                            'NEXT',
+                          child: TextField(
+                            controller: _coinsController,
+                            keyboardType: TextInputType.number,
+                            textAlign: TextAlign.center,
+                            maxLines: 1,
+                            textInputAction: TextInputAction.done,
+                            cursorColor: const Color(0xFF2A200F),
                             style: TextStyle(
-                              fontSize: 18,
+                              fontSize: fontSize,
                               fontWeight: FontWeight.w900,
-                              letterSpacing: 0.8,
+                              color: const Color(0xFF2A200F),
+                            ),
+                            decoration: const InputDecoration(
+                              border: InputBorder.none,
+                              isDense: true,
+                            ),
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly,
+                              LengthLimitingTextInputFormatter(10),
+                            ],
+                            onChanged: (_) => setState(() {}),
+                            onSubmitted: (_) => _next(balance),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: OverlayShimmer(
+                          borderRadius: BorderRadius.circular(14),
+                          opacity: 0.5,
+                          child: SizedBox(
+                            width: double.infinity,
+                            height: 54,
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFFE0AA14),
+                                foregroundColor: const Color(0xFF2A200F),
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                              ),
+                              onPressed: () => _next(balance),
+                              child: const Text(
+                                'NEXT',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 0.8,
+                                ),
+                              ),
                             ),
                           ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 14),
-                    const Text(
-                      'You must have +500 000 coins.',
-                      style: TextStyle(
-                        color: Color(0x992A200F),
-                        fontWeight: FontWeight.w700,
+                      const SizedBox(height: 14),
+                      const Text(
+                        'You must have +500 000 coins.',
+                        style: TextStyle(
+                          color: Color(0x992A200F),
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 10),
-                    const _RatesList(),
-                  ],
+                      const SizedBox(height: 10),
+                      const _RatesList(),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
           ),
         ),
       ),

@@ -10,6 +10,7 @@ import '../../../core/services/share_service.dart';
 import '../../../core/services/tracked_web_launcher_service.dart';
 import '../../../core/services/splash_tabs_launcher_service.dart';
 import '../../../core/state/app_state.dart';
+import '../../../core/widgets/overlay_shimmer.dart';
 import '../../exit/view/exit_dialog.dart';
 
 class MainScreen extends ConsumerStatefulWidget {
@@ -84,12 +85,11 @@ class _MainScreenState extends ConsumerState<MainScreen> {
   Widget build(BuildContext context) {
     final balance = ref.watch(balanceProvider);
     final remoteUrls = ref.watch(remoteUrlsProvider).valueOrNull;
-    final freeRobuxUrl = remoteUrls?.freeRobux ?? AppUrls.freeRobux;
     final triviaUrl = remoteUrls?.triviaQuiz ?? AppUrls.triviaQuiz;
     final bottomPadding = MediaQuery.of(context).padding.bottom;
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light.copyWith(
-        statusBarColor: Color(0xFF2A200F),
+        statusBarColor: Color(0xFF241802),
         systemStatusBarContrastEnforced: true,
       ),
       child: PopScope(
@@ -115,34 +115,25 @@ class _MainScreenState extends ConsumerState<MainScreen> {
             setState(() => _isEndDrawerOpen = isOpen);
           },
           body: SafeArea(
+            top: false,
             bottom: false,
             child: Column(
               children: [
-                _Header(
-                  balance: balance,
+                _TopBar(
                   onMenuTap: () => _scaffoldKey.currentState?.openEndDrawer(),
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 18),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: _BalanceBar(balance: balance),
+                ),
+                const SizedBox(height: 16),
                 const _ProfilesCarousel(),
                 const SizedBox(height: 18),
                 Expanded(
                   child: ListView(
                     padding: EdgeInsets.fromLTRB(16, 0, 16, 18 + bottomPadding),
                     children: [
-                      _ActionCard(
-                        title: 'PLAY GAMES & EARN',
-                        iconAsset: 'assets/play.png',
-                        route: '/play',
-                      ),
-                      SizedBox(height: 14),
-                      _ActionCard(
-                        title: 'GET FREE ROBUX',
-                        icon: Icons.card_giftcard,
-                        url: freeRobuxUrl,
-                        label: 'Get free robux',
-                        showAdBadge: true,
-                      ),
-                      SizedBox(height: 14),
                       _ActionCard(
                         title: 'STYLISH AVATAR & SKINS',
                         iconAsset: 'assets/skins.png',
@@ -153,26 +144,21 @@ class _MainScreenState extends ConsumerState<MainScreen> {
                         title: 'DAILY NEW RBX',
                         iconAsset: 'assets/daily.png',
                         route: '/daily',
+                        variant: _ActionCardVariant.dark,
                       ),
                       SizedBox(height: 14),
                       _ActionCard(
-                        title: 'SPIN TO WIN',
-                        iconAsset: 'assets/spin.png',
-                        route: '/spin',
+                        title: 'PLAY GAMES & EARN',
+                        iconAsset: 'assets/play.png',
+                        route: '/play',
                       ),
                       SizedBox(height: 14),
                       _ActionCard(
                         title: 'TRIVIA QUIZ',
-                        iconAsset: 'assets/trivia.png',
+                        iconText: 'AD',
                         url: triviaUrl,
                         label: 'Trivia quiz',
-                        showAdBadge: true,
-                      ),
-                      SizedBox(height: 14),
-                      _ActionCard(
-                        title: 'SCRATCH CARD',
-                        iconAsset: 'assets/scratch_icon.png',
-                        route: '/scratch',
+                        variant: _ActionCardVariant.dark,
                       ),
                       SizedBox(height: 14),
                       _ActionCard(
@@ -180,6 +166,20 @@ class _MainScreenState extends ConsumerState<MainScreen> {
                         iconAsset: 'assets/calculator.png',
                         route: '/calculator',
                       ),
+                      SizedBox(height: 14),
+                      _ActionCard(
+                        title: 'SPIN TO WIN',
+                        iconAsset: 'assets/spin.png',
+                        route: '/spin',
+                        variant: _ActionCardVariant.dark,
+                      ),
+                      SizedBox(height: 14),
+                      _ActionCard(
+                        title: 'SCRATCH TO WIN',
+                        iconAsset: 'assets/scratch_icon.png',
+                        route: '/scratch',
+                      ),
+                      SizedBox(height: 14),
                     ],
                   ),
                 ),
@@ -192,33 +192,54 @@ class _MainScreenState extends ConsumerState<MainScreen> {
   }
 }
 
-class _Header extends StatelessWidget {
-  const _Header({
-    required this.balance,
-    required this.onMenuTap,
-  });
+class _TopBar extends StatelessWidget {
+  const _TopBar({required this.onMenuTap});
 
-  final int balance;
   final VoidCallback onMenuTap;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          IconButton(
-            onPressed: onMenuTap,
-            icon: const Icon(Icons.menu),
-            color: const Color(0xFF2A200F),
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(),
-            splashRadius: 22,
-          ),
-          const SizedBox(height: 10),
-          _BalanceBar(balance: balance),
-        ],
+    const topGradient = LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: [Color(0xFF241802), Color(0xFF241802)],
+    );
+    final topInset = MediaQuery.of(context).padding.top;
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.only(top: topInset),
+      decoration: const BoxDecoration(gradient: topGradient),
+      child: SizedBox(
+        height: 56,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Positioned(
+              left: 8,
+              child: IconButton(
+                onPressed: onMenuTap,
+                icon: const Icon(Icons.menu),
+                color: Colors.white,
+                splashRadius: 24,
+              ),
+            ),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 64),
+              child: Text(
+                'Robux Rewards Get Easy RBX',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.3,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -233,12 +254,13 @@ class _BalanceBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: FractionallySizedBox(
-        widthFactor: 0.86,
+        widthFactor: 0.82,
         child: Container(
           height: 62,
           decoration: BoxDecoration(
             color: const Color(0xFFFFFFFF),
             borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: const Color(0x22000000), width: 1),
             boxShadow: const [
               BoxShadow(
                 color: Color(0x26000000),
@@ -251,10 +273,10 @@ class _BalanceBar extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Image.asset(
-                'assets/currency.png',
+                'assets/rbx.png',
                 width: 34,
                 height: 34,
-                color: const Color(0xFF2A200F),
+                color: const Color(0xFF241802),
                 filterQuality: FilterQuality.high,
               ),
               const SizedBox(width: 12),
@@ -267,7 +289,7 @@ class _BalanceBar extends StatelessWidget {
                         const TextSpan(
                           text: 'MY BALANCE: ',
                           style: TextStyle(
-                            color: Color(0xFF2A200F),
+                            color: Color(0xFF241802),
                             fontWeight: FontWeight.w600,
                             fontSize: 22,
                             letterSpacing: 0.4,
@@ -276,7 +298,7 @@ class _BalanceBar extends StatelessWidget {
                         TextSpan(
                           text: '$balance',
                           style: const TextStyle(
-                            color: Color(0xFF2A200F),
+                            color: Color(0xFF241802),
                             fontWeight: FontWeight.w900,
                             fontSize: 24,
                             letterSpacing: 0.4,
@@ -305,24 +327,21 @@ class _ProfilesCarousel extends StatefulWidget {
 class _ProfilesCarouselState extends State<_ProfilesCarousel>
     with SingleTickerProviderStateMixin {
   static const _names = [
-    'Lima',
-    'Mila',
-    'Noah',
-    'Ava',
-    'Ethan',
-    'Mia',
-    'Liam',
-    'Emma',
-    'Olivia',
-    'Lucas',
-    'Sofia',
-    'Aria',
-    'James',
-    'Henry',
-    'Elena',
-    'Nova',
-    'Kai',
-    'Zara',
+    'Ananya', // F (Indian)
+    'Sophia', // F (US)
+    'Arjun', // M (Indian)
+    'Ava', // F (US)
+    'Priya', // F (Indian)
+    'Noah', // M (US)
+    'Diya', // F (Indian)
+    'Liam', // M (US)
+    'Rohan', // M (Indian)
+    'Emma', // F (US)
+    'Kabir', // M (Indian)
+    'Mia', // F (US)
+    'Isha', // F (Indian)
+    'Ethan', // M (US)
+    'Vihaan', // M (Indian)
   ];
 
   static const _startIndex = 12000;
@@ -401,14 +420,12 @@ class _ProfilesCarouselState extends State<_ProfilesCarousel>
     const carouselGradient = LinearGradient(
       begin: Alignment.centerLeft,
       end: Alignment.centerRight,
-      colors: [Color(0xFF241802), Color(0xFF0B0700)],
+      colors: [Color(0xFF241802), Color(0xFF241802)],
     );
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 6),
-      decoration: BoxDecoration(
-        gradient: carouselGradient,
-      ),
+      decoration: BoxDecoration(gradient: carouselGradient),
       child: SizedBox(
         height: 148,
         child: Listener(
@@ -430,9 +447,7 @@ class _ProfilesCarouselState extends State<_ProfilesCarousel>
                 final avatar = (index % 15) + 1;
                 final name = _names[index % _names.length];
                 final amount = _amountForIndex(index);
-                final imageAsset = avatar == 9
-                    ? 'assets/profile _9.png'
-                    : 'assets/profile_$avatar.png';
+                final imageAsset = 'assets/profile_$avatar.png';
                 return RepaintBoundary(
                   child: _ProfileCard(
                     imageAsset: imageAsset,
@@ -516,29 +531,43 @@ class _ActionCard extends StatelessWidget {
     required this.title,
     this.iconAsset,
     this.icon,
+    this.iconText,
     this.url,
     this.label,
     this.route,
     this.showAdBadge = false,
+    this.variant = _ActionCardVariant.light,
   });
 
   final String title;
   final String? iconAsset;
   final IconData? icon;
+  final String? iconText;
   final String? url;
   final String? label;
   final String? route;
   final bool showAdBadge;
+  final _ActionCardVariant variant;
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: const Color(0xFFFDFBF6),
+    const darkCardColor = Color(0xFF241802);
+    const lightCardColor = Color(0xFFFFFFFF);
+
+    final isDark = variant == _ActionCardVariant.dark;
+    final cardRadius = BorderRadius.circular(22);
+
+    final iconBg = isDark ? Colors.white : darkCardColor;
+    final iconFg = isDark ? darkCardColor : Colors.white;
+    final titleColor = isDark ? Colors.white : const Color(0xFF241802);
+
+    final card = Material(
+      color: isDark ? darkCardColor : lightCardColor,
       elevation: 1,
-      shadowColor: const Color(0x22000000),
-      borderRadius: BorderRadius.circular(18),
+      shadowColor: const Color(0xFF241802),
+      borderRadius: cardRadius,
       child: InkWell(
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: cardRadius,
         onTap: () {
           final route = this.route;
           if (route != null) {
@@ -555,42 +584,48 @@ class _ActionCard extends StatelessWidget {
           );
         },
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
           child: Stack(
             children: [
               Row(
                 children: [
                   Container(
-                    width: 56,
-                    height: 56,
+                    width: 70,
+                    height: 70,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF201402),
-                      borderRadius: BorderRadius.circular(16),
+                      color: iconBg,
+                      borderRadius: BorderRadius.circular(24),
                     ),
                     child: Center(
-                      child: iconAsset != null
+                      child: iconText != null
+                          ? Text(
+                              iconText!,
+                              style: TextStyle(
+                                color: iconFg,
+                                fontSize: 22,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 1.2,
+                              ),
+                            )
+                          : iconAsset != null
                           ? Image.asset(
                               iconAsset!,
-                              width: 28,
-                              height: 28,
-                              color: Colors.white,
+                              width: 34,
+                              height: 34,
+                              color: iconFg,
                             )
-                          : Icon(
-                              icon ?? Icons.circle,
-                              color: Colors.white,
-                              size: 28,
-                            ),
+                          : Icon(icon ?? Icons.circle, color: iconFg, size: 34),
                     ),
                   ),
-                  const SizedBox(width: 14),
+                  const SizedBox(width: 18),
                   Expanded(
                     child: Text(
                       title,
-                      style: const TextStyle(
-                        color: Color(0xFF2A200F),
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 0.4,
+                      style: TextStyle(
+                        color: titleColor,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0.6,
                       ),
                     ),
                   ),
@@ -606,13 +641,13 @@ class _ActionCard extends StatelessWidget {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF201402),
+                      color: isDark ? Colors.white : darkCardColor,
                       borderRadius: BorderRadius.circular(999),
                     ),
-                    child: const Text(
+                    child: Text(
                       'AD',
                       style: TextStyle(
-                        color: Colors.white,
+                        color: isDark ? darkCardColor : Colors.white,
                         fontSize: 12,
                         fontWeight: FontWeight.w900,
                         letterSpacing: 0.8,
@@ -625,8 +660,13 @@ class _ActionCard extends StatelessWidget {
         ),
       ),
     );
+
+    if (!isDark) return card;
+    return OverlayShimmer(borderRadius: cardRadius, child: card);
   }
 }
+
+enum _ActionCardVariant { light, dark }
 
 class _FullScreenMenuDrawer extends StatelessWidget {
   const _FullScreenMenuDrawer();
@@ -634,7 +674,7 @@ class _FullScreenMenuDrawer extends StatelessWidget {
   static const _headerGradient = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
-    colors: [Color(0xFF3A2A07), Color(0xFF0B0700)],
+    colors: [Color(0xFF241802), Color(0xFF241802)],
   );
 
   @override
@@ -668,7 +708,7 @@ class _FullScreenMenuDrawer extends StatelessWidget {
                     width: 120,
                     height: 120,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF201402),
+                      color: const Color(0xFF241802),
                       borderRadius: BorderRadius.circular(24),
                     ),
                     child: Center(

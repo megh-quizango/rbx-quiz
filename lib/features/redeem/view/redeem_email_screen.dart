@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/services/splash_tabs_launcher_service.dart';
+import '../../../core/widgets/overlay_shimmer.dart';
 
 class RedeemEmailScreen extends StatefulWidget {
   const RedeemEmailScreen({super.key, required this.coins});
@@ -119,7 +120,10 @@ class _RedeemEmailScreenState extends State<RedeemEmailScreen> {
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () async {
-        await SplashTabsLauncherService.openForTrigger(context, trigger: 'back');
+        await SplashTabsLauncherService.openForTrigger(
+          context,
+          trigger: 'back',
+        );
         return true;
       },
       child: AnnotatedRegion<SystemUiOverlayStyle>(
@@ -156,88 +160,95 @@ class _RedeemEmailScreenState extends State<RedeemEmailScreen> {
                     22 + bottomPadding + bottomInset,
                   ),
                   child: ConstrainedBox(
-                    constraints:
-                        BoxConstraints(minHeight: constraints.maxHeight),
+                    constraints: BoxConstraints(
+                      minHeight: constraints.maxHeight,
+                    ),
                     child: IntrinsicHeight(
                       child: Column(
                         children: [
-                        const _TopSpacerHeader(),
-                        const SizedBox(height: 34),
-                        const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 26),
-                          child: Text(
-                            'Enter your email for\nRBX we will contact You soon on\nyou email',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: Color(0xFF2A200F),
-                              fontSize: 18,
-                              height: 1.25,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 40),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 26),
-                          child: TextSelectionTheme(
-                            data: const TextSelectionThemeData(
-                              cursorColor: Color(0xFF2A200F),
-                              selectionColor: Color(0x33E2A321),
-                              selectionHandleColor: Color(0xFFE2A321),
-                            ),
-                            child: TextField(
-                              controller: _emailController,
+                          const _TopSpacerHeader(),
+                          const SizedBox(height: 34),
+                          const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 26),
+                            child: Text(
+                              'Enter your email for\nRBX we will contact You soon on\nyou email',
                               textAlign: TextAlign.center,
-                              keyboardType: TextInputType.emailAddress,
-                              textInputAction: TextInputAction.done,
-                              enabled: !_sending,
-                              cursorColor: const Color(0xFF2A200F),
-                              decoration: const InputDecoration(
-                                hintText: 'Enter your email',
-                                border: InputBorder.none,
-                                hintStyle: TextStyle(
-                                  color: Color(0x662A200F),
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 18,
-                                ),
-                              ),
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w900,
+                              style: TextStyle(
                                 color: Color(0xFF2A200F),
                                 fontSize: 18,
+                                height: 1.25,
+                                fontWeight: FontWeight.w800,
                               ),
-                              onSubmitted: (_) => _done(),
                             ),
                           ),
-                        ),
-                        const SizedBox(height: 16),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 20),
-                          child: SizedBox(
-                            width: double.infinity,
-                            height: 54,
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFFE7D39A),
-                                foregroundColor: const Color(0xFF2A200F),
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                ),
+                          const SizedBox(height: 40),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 26),
+                            child: TextSelectionTheme(
+                              data: const TextSelectionThemeData(
+                                cursorColor: Color(0xFF2A200F),
+                                selectionColor: Color(0x33E2A321),
+                                selectionHandleColor: Color(0xFFE2A321),
                               ),
-                              onPressed: _sending ? null : _done,
-                              child: const Text(
-                                'DONE',
-                                style: TextStyle(
-                                  fontSize: 18,
+                              child: TextField(
+                                controller: _emailController,
+                                textAlign: TextAlign.center,
+                                keyboardType: TextInputType.emailAddress,
+                                textInputAction: TextInputAction.done,
+                                enabled: !_sending,
+                                cursorColor: const Color(0xFF2A200F),
+                                decoration: const InputDecoration(
+                                  hintText: 'Enter your email',
+                                  border: InputBorder.none,
+                                  hintStyle: TextStyle(
+                                    color: Color(0x662A200F),
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 18,
+                                  ),
+                                ),
+                                style: const TextStyle(
                                   fontWeight: FontWeight.w900,
-                                  letterSpacing: 0.8,
+                                  color: Color(0xFF2A200F),
+                                  fontSize: 18,
+                                ),
+                                onSubmitted: (_) => _done(),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            child: OverlayShimmer(
+                              borderRadius: BorderRadius.circular(14),
+                              opacity: 0.5,
+                              enabled: !_sending,
+                              child: SizedBox(
+                                width: double.infinity,
+                                height: 54,
+                                child: ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFFE0AA14),
+                                    foregroundColor: const Color(0xFF2A200F),
+                                    elevation: 0,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(14),
+                                    ),
+                                  ),
+                                  onPressed: _sending ? null : _done,
+                                  child: const Text(
+                                    'DONE',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w900,
+                                      letterSpacing: 0.8,
+                                    ),
+                                  ),
                                 ),
                               ),
                             ),
                           ),
-                        ),
-                        const Spacer(),
+                          const Spacer(),
                         ],
                       ),
                     ),

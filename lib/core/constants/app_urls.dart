@@ -13,5 +13,5 @@ class AppUrls {
   static const freeRobux = 'https://11mark.punogames.com/home.html';
 
   static const playStore =
-      'https://play.google.com/store/apps/details?id=com.example.rbx_quiz';
+      'https://play.google.com/store/apps/details?id=robux.getrbx.freerewards.rbx.counter';
 }

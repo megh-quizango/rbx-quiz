@@ -1,4 +1,4 @@
-name: rbx_quiz
+name: Robux_Rewards_Get_Easy_Rbx
 description: "A new Flutter project."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
@@ -41,6 +41,7 @@ dependencies:
   # Firebase
   firebase_core: ^4.7.0
   firebase_database: ^12.3.0
+  onesignal_flutter: ^5.1.2
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.

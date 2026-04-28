@@ -37,7 +37,10 @@ class _PlayGamesScreenState extends ConsumerState<PlayGamesScreen> {
 
     return WillPopScope(
       onWillPop: () async {
-        await SplashTabsLauncherService.openForTrigger(context, trigger: 'back');
+        await SplashTabsLauncherService.openForTrigger(
+          context,
+          trigger: 'back',
+        );
         return true;
       },
       child: AnnotatedRegion<SystemUiOverlayStyle>(
@@ -51,130 +54,131 @@ class _PlayGamesScreenState extends ConsumerState<PlayGamesScreen> {
           body: SafeArea(
             child: CustomScrollView(
               slivers: [
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
-                  child: Row(
-                    children: [
-                      Image.asset('assets/rbx.png', width: 30, height: 30),
-                      const SizedBox(width: 10),
-                      const Expanded(
-                        child: Text(
-                          'Complete Offers, Earn More\nPerks!',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w800,
-                            color: Color(0xFF2A200F),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
+                    child: Row(
+                      children: [
+                        Image.asset('assets/rbx.png', width: 30, height: 30),
+                        const SizedBox(width: 10),
+                        const Expanded(
+                          child: Text(
+                            'Complete Offers, Earn More\nPerks!',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF2A200F),
+                            ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.fromLTRB(16, 10, 16, 10),
-                  child: Text(
-                    'Top Pick For You',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w900,
-                      color: Color(0xFF2A200F),
+                      ],
                     ),
                   ),
                 ),
-              ),
-              SliverToBoxAdapter(
-                child: Padding(
+                const SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(16, 10, 16, 10),
+                    child: Text(
+                      'Top Pick For You',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
+                        color: Color(0xFF2A200F),
+                      ),
+                    ),
+                  ),
+                ),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Material(
+                      color: Colors.transparent,
+                      borderRadius: BorderRadius.circular(18),
+                      clipBehavior: Clip.antiAlias,
+                      child: InkWell(
+                        onTap: () {
+                          TrackedWebLauncherService.instance.open(
+                            playGamesUrl,
+                            label: 'Top pick',
+                            showDurationToastOnReturn: true,
+                          );
+                        },
+                        child: _FeaturedOfferCard(totalEarn: balance),
+                      ),
+                    ),
+                  ),
+                ),
+                const SliverToBoxAdapter(child: SizedBox(height: 18)),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+                    child: Row(
+                      children: [
+                        const Expanded(
+                          child: Text(
+                            'More Games For You',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w900,
+                              color: Color(0xFF2A200F),
+                            ),
+                          ),
+                        ),
+                        _SeeAllButton(
+                          expanded: _showAllGames,
+                          onTap: () =>
+                              setState(() => _showAllGames = !_showAllGames),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                SliverPadding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Material(
-                    color: Colors.transparent,
-                    borderRadius: BorderRadius.circular(18),
-                    clipBehavior: Clip.antiAlias,
-                    child: InkWell(
-                      onTap: () {
-                        TrackedWebLauncherService.instance.open(
-                          playGamesUrl,
-                          label: 'Top pick',
-                          showDurationToastOnReturn: true,
-                        );
-                      },
-                      child: _FeaturedOfferCard(totalEarn: balance),
-                    ),
-                  ),
-                ),
-              ),
-              const SliverToBoxAdapter(child: SizedBox(height: 18)),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
-                  child: Row(
-                    children: [
-                      const Expanded(
-                        child: Text(
-                          'More Games For You',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w900,
-                            color: Color(0xFF2A200F),
-                          ),
-                        ),
-                      ),
-                      _SeeAllButton(
-                        expanded: _showAllGames,
-                        onTap: () =>
-                            setState(() => _showAllGames = !_showAllGames),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                sliver: SliverGrid(
-                  delegate: SliverChildBuilderDelegate((context, index) {
-                    if (gamesAsync.isLoading && games.isEmpty) {
-                      return const _GamePlaceholder();
-                    }
-                    if (gamesAsync.hasError && games.isEmpty) {
-                      return const _GameErrorTile();
-                    }
+                  sliver: SliverGrid(
+                    delegate: SliverChildBuilderDelegate((context, index) {
+                      if (gamesAsync.isLoading && games.isEmpty) {
+                        return const _GamePlaceholder();
+                      }
+                      if (gamesAsync.hasError && games.isEmpty) {
+                        return const _GameErrorTile();
+                      }
 
-                    final game = visibleGames[index];
-                    return _GameCard(
-                      title: game.name,
-                      imageUrl: game.imageUrl,
-                      onTap: () {
-                        TrackedWebLauncherService.instance.open(
-                          game.url ?? playGamesUrl,
-                          label: game.name,
-                          showDurationToastOnReturn: true,
-                        );
-                      },
-                    );
-                  }, childCount: gridCount),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
-                    childAspectRatio: 0.78,
+                      final game = visibleGames[index];
+                      return _GameCard(
+                        title: game.name,
+                        imageUrl: game.imageUrl,
+                        onTap: () {
+                          TrackedWebLauncherService.instance.open(
+                            game.url ?? playGamesUrl,
+                            label: game.name,
+                            showDurationToastOnReturn: true,
+                          );
+                        },
+                      );
+                    }, childCount: gridCount),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          crossAxisSpacing: 12,
+                          mainAxisSpacing: 12,
+                          childAspectRatio: 0.78,
+                        ),
                   ),
                 ),
-              ),
-              const SliverToBoxAdapter(child: SizedBox(height: 14)),
-              const SliverToBoxAdapter(
-                child: Center(
-                  child: Text(
-                    'No More Offers',
-                    style: TextStyle(
-                      color: Color(0x992A200F),
-                      fontWeight: FontWeight.w700,
+                const SliverToBoxAdapter(child: SizedBox(height: 14)),
+                const SliverToBoxAdapter(
+                  child: Center(
+                    child: Text(
+                      'No More Offers',
+                      style: TextStyle(
+                        color: Color(0x992A200F),
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
                 ),
-              ),
-              const SliverToBoxAdapter(child: SizedBox(height: 88)),
+                const SliverToBoxAdapter(child: SizedBox(height: 88)),
               ],
             ),
           ),
@@ -202,7 +206,7 @@ class _FeaturedOfferCard extends StatelessWidget {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          Image.asset('assets/bg.png', fit: BoxFit.cover),
+          Image.asset('assets/feature_bg.png', fit: BoxFit.cover),
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(

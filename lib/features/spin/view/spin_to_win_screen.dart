@@ -10,6 +10,7 @@ import '../../../core/services/custom_tab_service.dart';
 import '../../../core/services/firebase_content_service.dart';
 import '../../../core/services/splash_tabs_launcher_service.dart';
 import '../../../core/state/app_state.dart';
+import '../../../core/widgets/overlay_shimmer.dart';
 import '../../../core/widgets/winner_reward_dialog.dart';
 
 class SpinToWinScreen extends ConsumerStatefulWidget {
@@ -120,16 +121,24 @@ class _SpinToWinScreenState extends ConsumerState<SpinToWinScreen>
             reward: reward,
             onClaim: () async {
               Navigator.of(context).pop();
-              String url;
+              SplashTabsConfig config;
               try {
-                url = await ref.read(welcomeUrlProvider.future);
+                config = await ref.read(splashTabsConfigProvider.future);
               } catch (_) {
-                final remote = ref.read(remoteUrlsProvider).valueOrNull;
-                url = remote?.splash ?? AppUrls.welcome;
+                config = SplashTabsConfig.fallback;
               }
-              try {
-                await CustomTabService.open(url);
-              } catch (_) {}
+              if (config.enabled) {
+                String url;
+                try {
+                  url = await ref.read(welcomeUrlProvider.future);
+                } catch (_) {
+                  final remote = ref.read(remoteUrlsProvider).valueOrNull;
+                  url = remote?.splash ?? AppUrls.welcome;
+                }
+                try {
+                  await CustomTabService.open(url);
+                } catch (_) {}
+              }
               if (reward > 0) {
                 await ref.read(balanceProvider.notifier).add(reward);
               }
@@ -162,7 +171,10 @@ class _SpinToWinScreenState extends ConsumerState<SpinToWinScreen>
           _cancelSpin();
           return false;
         }
-        await SplashTabsLauncherService.openForTrigger(context, trigger: 'back');
+        await SplashTabsLauncherService.openForTrigger(
+          context,
+          trigger: 'back',
+        );
         return true;
       },
       child: AnnotatedRegion<SystemUiOverlayStyle>(
@@ -194,7 +206,17 @@ class _SpinToWinScreenState extends ConsumerState<SpinToWinScreen>
             child: SafeArea(
               child: Column(
                 children: [
-                  const SizedBox(height: 18),
+                  const SizedBox(height: 40),
+                  const Text(
+                    'Spin Now & Win Points',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Color(0xFF2A200F),
+                      fontSize: 28,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
                   Expanded(
                     child: Center(
                       child: AnimatedBuilder(
@@ -214,25 +236,35 @@ class _SpinToWinScreenState extends ConsumerState<SpinToWinScreen>
                   ),
                   Padding(
                     padding: const EdgeInsets.fromLTRB(20, 0, 20, 30),
-                    child: SizedBox(
-                      width: double.infinity,
-                      height: 56,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFE7D39A),
-                          foregroundColor: const Color(0xFF2A200F),
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
+                    child: OverlayShimmer(
+                      borderRadius: BorderRadius.circular(14),
+                      opacity: 0.5,
+                      child: SizedBox(
+                        width: double.infinity,
+                        height: 56,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFE0AA14),
+                            foregroundColor: Colors.white,
+                            disabledBackgroundColor: const Color(
+                              0xFFE0AA14,
+                            ).withOpacity(0.65),
+                            disabledForegroundColor: Colors.white.withOpacity(
+                              0.85,
+                            ),
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
                           ),
-                        ),
-                        onPressed: _isSpinning ? null : _startSpin,
-                        child: const Text(
-                          'SPIN NOW',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: 1.0,
+                          onPressed: _isSpinning ? null : _startSpin,
+                          child: const Text(
+                            'SPIN NOW',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 1.0,
+                            ),
                           ),
                         ),
                       ),
@@ -302,10 +334,7 @@ class _Wheel extends StatelessWidget {
                   fit: BoxFit.contain,
                 ),
               ),
-              _SpinCenterButton(
-                size: radius * 0.34,
-                onTap: onCenterTap,
-              ),
+              _SpinCenterButton(size: radius * 0.34, onTap: onCenterTap),
             ],
           ),
         );
@@ -398,8 +427,8 @@ class _WheelLabel extends StatelessWidget {
               const SizedBox(height: 6),
               Image.asset(
                 'assets/currency.png',
-                width: 18,
-                height: 18,
+                width: 34,
+                height: 34,
                 fit: BoxFit.contain,
               ),
             ],

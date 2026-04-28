@@ -1,7 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'routing/app_router.dart';
 import 'core/services/app_scaffold_messenger.dart';
@@ -32,6 +34,13 @@ Future<void> _configureOrientation() async {
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  if (kDebugMode) {
+    OneSignal.Debug.setLogLevel(OSLogLevel.verbose);
+  }
+  OneSignal.initialize('64130787-f0fd-4385-a4b2-4158d1ba7eab');
+  OneSignal.Notifications.requestPermission(false);
+
   final prefsFuture = SharedPreferences.getInstance();
   await _configureOrientation();
   TrackedWebLauncherService.instance.init();

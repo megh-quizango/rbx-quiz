@@ -11,10 +11,7 @@ class SkinsNode {
 }
 
 sealed class SkinsEntry {
-  const SkinsEntry({
-    required this.title,
-    required this.iconAsset,
-  });
+  const SkinsEntry({required this.title, required this.iconAsset});
 
   final String title;
   final String iconAsset;
